@@ -25,6 +25,6 @@ HW_page = st.Page("HWs/HW 1_app.py", title="HW 1", icon="📄")
 Lab2_page = st.Page("HWs/HW 2_app.py", title="HW 2", icon="🧪")
 
 
-pg = st.navigation( [HW_page, Lab2_page])
+pg = st.navigation( [HW_page, HW 2_page])
 st.set_page_config(page_title="My Streamlit App", page_icon=':material/edit:')
 pg.run() 
