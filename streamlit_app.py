@@ -8,7 +8,7 @@ st.set_page_config(page_title="OpenAI Streamlit App", page_icon=None, layout="ce
 
     # Configure global settings for the Streamlit app (must be called from the top)
 st.set_page_config(
-        page_title="Leytisha's HW App",
+        page_title="HW Manager",
         page_icon="🤖",
         layout="wide",
         initial_sidebar_state="expanded",
@@ -27,5 +27,5 @@ HW2_page = st.Page("HWs/HW2_app.py", title="HW2", icon="🧪")
 
 pg = st.navigation([HW1_page, HW2_page])
 
-st.set_page_config(page_title="My Streamlit App Version 2", page_icon=':material/edit:')
+st.set_page_config(page_title="My Streamlit App", page_icon=':material/edit:')
 pg.run() 
