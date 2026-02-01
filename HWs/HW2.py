@@ -68,15 +68,101 @@ OUTPUT LANGUAGE:
 write the summary in {output_language}. Do not include other languages.
 
 STYLE:
+- Use clear and concise language for a general audience.
+- Maintain the original meaning and key points of the document.
+- If the page content is too short to generate the requested summary, indicate that in the response.
 
+WEB PAGE TEXT:
+\"\"\"{text[:20000]}\"\"\"
+""".strip()
 
+def call_openai(prompt: str, advanced: bool) -> str:
+    # OpenAI SDK (python package: openai)
+    from openai import OpenAI
+
+    api_key = st.secrets.get("OPENAI_API_KEY", "")
+    if not api_key:
+        st.error("OpenAI API key is not set in secrets.")
+        return "Error: OpenAI API key is missing."
+
+    client = OpenAI(api_key=api_key)
+
+    # Choose OpenAI models 
+    model = "gpt-4o" if advanced else "gpt-4o-mini"
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant that summarizes web pages based on user instructions."},
+            {"role": "user", "content": prompt},
+        ]
+    )
+    return response.choices[0].message.content.strip()
+
+def call_claude(prompt: str, advanced: bool) -> str:
+    # Anthropic SDK (python package: anthropic)
+    from anthropic import Anthropic
+
+    api_key = st.secrets.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        st.error("Anthropic API key is not set in secrets.")
+        return "Error: Anthropic API key is missing."
     
+    client = Anthropic(api_key=api_key)
 
+    # Choose Claude models 
+    model_name = "claude-3-5-sonnet-2024-10-09" if advanced else "claude-3-haiku-2024-10-09"
+
+    response = client.chat.completions.create(
+        model=model_name,
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant that summarizes web pages based on user instructions."},
+            {"role": "user", "content": prompt},
+        ],
+    )
+    # Claude responses are returned as content blocks
+    return response.choices[0].text.strip()
+
+def validate_key(provider: str) -> None:
+    """
+    Simple "key validity" check: we make a tiny request to the selected provider.
+    If it fails, we raise an error.
+    """
+    test_prompt = "Say OK."
+
+    if provider == "OpenAI":
+        _ = call_openai(test_prompt, advanced=False)
+    elif provider == "Claude":
+        _ = call_claude(test_prompt, advanced=False)
+    else:
+        raise ValueError(f"Unknown provider: {provider}")
+
+
+def run_llm(provider: str, prompt: str, advanced: bool) -> str:
+    if provider == "OpenAI":
+        return call_openai(prompt, advanced)
+    if provider == "Gemini":
+        return call_gemini(prompt, advanced)
+    raise ValueError(f"Unknown provider: {provider}")
+
+# User Interface
+st.set_page_config(page_title="HW2 – URL Summarizer", page_icon="🌐", layout="wide")
+st.title("🌐 HW2 — URL Summarizer with Multiple LLMs")
+
+# URL input at TOP of screen (not sidebar)
+url = st.text_input("Enter a web page URL", placeholder="https://example.com/article")
+
+# Output language dropdown (at least 3 options)
+output_language = st.selectbox(
+    "Output language",
+    ["English", "French", "Spanish", "German", "Chinese", "Japanese", "Portuguese", "Italian",],
+    index=0,
+)
 
 # Show title and description.
-st.title("Document Summarizer App")
+st.title("Web Page Summarizer App")
 st.write(
-    "Upload a PDF or a TXT document below and ask a question about it – GPT will answer! "
+    "Enter a URL of a web page below and generate a summary using your choice of LLM provider and model."
 )
 
 st.sidebar.header(":blue[Summary Options]")
@@ -90,13 +176,16 @@ summary_type = st.sidebar.radio(
     ],
 )
 
-use_advanced_model = st.sidebar.checkbox("Use advanced model (gpt-4o)")
+use_advanced_model = st.sidebar.checkbox("Use advanced model", value=True)
 
-model_name = "gpt-4o-mini" if use_advanced_model else "gpt-4o"
+provider = st.sidebar.selectbox(
+    "Select LLM provider:",
+    ["OpenAI", "Claude"],
+    index=0,
+)   
 
-uploaded_file = st.file_uploader(
-    "Upload a document (.txt or .pdf)", type=("txt", "pdf")
-)
+st.sidebar.caption("Make sure to set your API keys in Streamlit secrets.")
+
 
 if summary_type == "100-word summary":
     summary_instruction = "Summarize the following document in approximately 100 words."
@@ -105,26 +194,24 @@ elif summary_type == "Two-paragraph summary":
 else:
     summary_instruction = "Summarize the following document in five bullet points."
 
-if uploaded_file:
-    document_text = read_pdf(uploaded_file) if uploaded_file.name.endswith(".pdf") else uploaded_file.read().decode()
+if url:
+    document_text = read_url_content(url.strip())
 
-    if st.button(type="tertiary", label="Generate Summary"):
+    if document_text and st.button(type="tertiary", label="Generate Summary"):
         with st.spinner("Generating summary..."):
-            response = client.chat.completions.create(
-                model=model_name,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a helpful assistant that summarizes documents based on user instructions.",
-                    },
-                    {
-                        "role": "user",
-                        "content": f"{summary_instruction}\n\nDocument:\n{document_text}",
-                    }
-                ]
+            prompt = (
+                f"{summary_instruction}\n\n"
+                f"Write the summary in {output_language}.\n\n"
+                f"URL:\n{url}\n\n"
+                f"Document:\n{document_text}"
             )
-        st.subheader("Summary:")
-        st.write(response.choices[0].message.content)
-        st.write("_Summary generated successfully!_")
 
+            if llm_provider == "OpenAI":
+                summary = call_openai(prompt, advanced=use_advanced_model)
+            else:
+                summary = call_claude(prompt, advanced=use_advanced_model)
+
+        st.subheader("Summary:")
+        st.write(summary)
+        st.write("_Summary generated successfully!_")
  
