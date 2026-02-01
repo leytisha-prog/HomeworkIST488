@@ -1,8 +1,38 @@
+
 import streamlit as st
 from openai import OpenAI 
 import PyPDF2
 import io
 
+ 
+# Use markdown to style generate summary button
+
+st.markdown("""
+ <style>
+ /* Targets the button element inside a specific Streamlit container */
+ div.stButton > button:first-child {
+     background-color: #002975; /* Custom background color */
+     color: white;              /* Text color */
+     border: none;
+     border-radius: 8px;        /* Rounded corners */
+    padding: 10px 24px;
+    cursor: pointer;
+    font-size: 16px;
+ }
+ 
+ /* Changes style on hover */
+ div.stButton > button:first-child:hover {
+     background-color: #005fa3;
+ }
+ 
+ /* Changes style when the button is active (clicked) */
+ div.stButton > button:first-child:active {
+     background-color: #003e6b;
+ }
+ </style>
+ """, unsafe_allow_html=True)
+ 
+ 
 def read_pdf(uploaded_file):
     pdf_reader = PyPDF2.PdfReader(uploaded_file)
     text = ""
@@ -10,66 +40,66 @@ def read_pdf(uploaded_file):
         text += page.extract_text()
     return text
 
+try:
+    client = OpenAI(
+        api_key=st.secrets["OPEN_AI_KEY"]
+    )
+except KeyError:
+    st.error("OpenAI API key not found. Please set it in Streamlit secrets.")
+
+
 # Show title and description.
-st.title("Leytisha's HW 1 App")
+st.title("Document Summarizer App")
 st.write(
     "Upload a PDF or a TXT document below and ask a question about it – GPT will answer! "
-    "To use this app, you need to provide an OpenAI API key, which you can get [here](https://platform.openai.com/account/api-keys). "
 )
 
-# Ask user for their OpenAI API key via `st.text_input`.
-# Alternatively, you can store the API key in `./.streamlit/secrets.toml` and access it
-# via `st.secrets`, see https://docs.streamlit.io/develop/concepts/connections/secrets-management
-openai_api_key = st.text_input("OpenAI API Key", type="password")
-if not openai_api_key:
-    st.info("Please add your OpenAI API key to continue.", icon="🗝️")
-else:
+st.sidebar.header(":blue[Summary Options]")
 
-    # Create an OpenAI Client
-    client = OpenAI(api_key=openai_api_key)
-    try:
-        client.models.list()
-        st.success("API key validated ✅")
-    # Let the user upload a file via `st.file_uploader`.
-        uploaded_file = st.file_uploader(
-            "Upload a document (.txt or .pdf)", type=("txt", "pdf")
-        )
-    
-    # Ask the user for a question via `st.text_area`.
-        question = st.text_area(
-            "Now ask a question about the document!",
-            placeholder="Can you give me a short summary?",
-            disabled=not uploaded_file,
-        )
- 
-        if uploaded_file and question:
-        # Process the uploaded file and question.
-                file_extension = uploaded_file.name.split('.')[-1]
-            
-                if file_extension == 'txt':
-                    document = uploaded_file.read().decode()
-                elif file_extension == 'pdf':
-                    document = read_pdf(uploaded_file)
-                else:
-                    st.error("Unsupported file type.")
-                    st.stop()
-                
-                messages = [
+summary_type = st.sidebar.radio(
+    "Choose summary type:",
+    [
+        "100-word summary",
+        "Two-paragraph summary",
+        "Five bullet points",
+    ],
+)
+
+use_advanced_model = st.sidebar.checkbox("Use advanced model (gpt-4o)")
+
+model_name = "gpt-4o-mini" if use_advanced_model else "gpt-4o"
+
+uploaded_file = st.file_uploader(
+    "Upload a document (.txt or .pdf)", type=("txt", "pdf")
+)
+
+if summary_type == "100-word summary":
+    summary_instruction = "Summarize the following document in approximately 100 words."
+elif summary_type == "Two-paragraph summary":
+    summary_instruction = "Summarize the following document in two concise paragraphs."
+else:
+    summary_instruction = "Summarize the following document in five bullet points."
+
+if uploaded_file:
+    document_text = read_pdf(uploaded_file) if uploaded_file.name.endswith(".pdf") else uploaded_file.read().decode()
+
+    if st.button(type="tertiary", label="Generate Summary"):
+        with st.spinner("Generating summary..."):
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant that summarizes documents based on user instructions.",
+                    },
                     {
                         "role": "user",
-                        "content": f"Here's a document: {document} \n\n---\n\n {question}",
+                        "content": f"{summary_instruction}\n\nDocument:\n{document_text}",
                     }
                 ]
+            )
+        st.subheader("Summary:")
+        st.write(response.choices[0].message.content)
+        st.write("_Summary generated successfully!_")
+
  
-            # Generate an answer using the OpenAI API.
-                stream = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=messages,
-                    stream=True,
-                )
- 
-            # Stream the response to the app using `st.write_stream`.
-                st.write_stream(stream)
- 
-    except Exception as e:
-        st.error("Invalid API Key, please try again.")
