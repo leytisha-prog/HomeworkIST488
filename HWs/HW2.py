@@ -45,12 +45,32 @@ def read_url_content(url):
         st.error(f"Error reading {url}: {e}")
         return None
 
-try:
-    client = OpenAI(
-        api_key=st.secrets["OPENAI_API_KEY"]
+# LLM Helper
+
+def build_prompt(text: str, summary_type: str, output_language: str) -> str:
+    # tune to match Lab 2 "summary type" options
+    instructions_by_type = {
+        "100-word summary": "Summarize the following document in approximately 100 words.",
+        "Two-paragraph summary": "Summarize the following document in two concise paragraphs.",
+        "Five bullet points": "Summarize the following document in five bullet points."
+    }
+
+    summary_instruction = instructions_by_type.get(
+        summary_type, "Summarize the following document."
     )
-except KeyError:
-    st.error("OpenAI API key not found. Please set it in Streamlit secrets.")
+
+    return f"""
+You are a helpful assistant that summarizes documents based on user instructions.
+
+TASK: {summary_instruction}
+
+OUTPUT LANGUAGE: 
+write the summary in {output_language}. Do not include other languages.
+
+STYLE:
+
+
+    
 
 
 # Show title and description.
