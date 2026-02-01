@@ -1,4 +1,5 @@
 
+from pkg_resources import get_provider
 import streamlit as st
 from openai import OpenAI 
 import requests
@@ -141,8 +142,8 @@ def validate_key(provider: str) -> None:
 def run_llm(provider: str, prompt: str, advanced: bool) -> str:
     if provider == "OpenAI":
         return call_openai(prompt, advanced)
-    if provider == "Gemini":
-        return call_gemini(prompt, advanced)
+    if provider == "Claude":
+        return call_claude(prompt, advanced)
     raise ValueError(f"Unknown provider: {provider}")
 
 # User Interface
@@ -206,7 +207,7 @@ if url:
                 f"Document:\n{document_text}"
             )
 
-            if llm_provider == "OpenAI":
+            if get_provider == "OpenAI":
                 summary = call_openai(prompt, advanced=use_advanced_model)
             else:
                 summary = call_claude(prompt, advanced=use_advanced_model)
