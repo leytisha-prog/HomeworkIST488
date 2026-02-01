@@ -1,8 +1,9 @@
 
 import streamlit as st
 from openai import OpenAI 
-import PyPDF2
-import io
+import requests
+from bs4 import BeautifulSoup
+
 
  
 # Use markdown to style generate summary button
@@ -32,13 +33,17 @@ st.markdown("""
  </style>
  """, unsafe_allow_html=True)
  
- 
-def read_pdf(uploaded_file):
-    pdf_reader = PyPDF2.PdfReader(uploaded_file)
-    text = ""
-    for page in pdf_reader.pages:
-        text += page.extract_text()
-    return text
+
+ # URL Reader (provided by Prof.)
+def read_url_content(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status() # raise an eception for HTTP errors
+        soup = BeautifulSoup(response.text, 'html.parser')
+        return soup.get_text(separator='\n')
+    except requests.RequestException as e:
+        st.error(f"Error reading {url}: {e}")
+        return None
 
 try:
     client = OpenAI(
