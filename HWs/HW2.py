@@ -112,7 +112,8 @@ def call_claude(prompt: str, advanced: bool) -> str:
     client = Anthropic(api_key=api_key)
 
     # Use stable aliases (recommended for assignments + fewer “model not found” issues)
-    model = "claude-3-5-sonnet-latest" if advanced else "claude-3-5-haiku-latest"
+    model = "claude-sonnet-4-5" if advanced else "claude-haiku-4-5"
+
 
     try:
         resp = client.messages.create(
