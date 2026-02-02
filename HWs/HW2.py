@@ -114,7 +114,7 @@ def call_claude(prompt: str, advanced: bool) -> str:
     # Choose Claude models 
     model_name = "claude-3-5-sonnet-20240620" if advanced else "claude-3-haiku-20240307"
 
-    response = client.messages.create(
+    response = client.completions.create(
         model=model_name,
         messages=[
             {"role": "system", "content": prompt},
