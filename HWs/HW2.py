@@ -177,6 +177,7 @@ provider = st.sidebar.selectbox(
     index=0,
 )   
 
+llm_provider = st.sidebar.selectbox("LLM Provider", ["OpenAI", "Claude"])
 st.sidebar.caption("Make sure to set your API keys in Streamlit secrets.")
 
 
