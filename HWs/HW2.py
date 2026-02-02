@@ -112,13 +112,12 @@ def call_claude(prompt: str, advanced: bool) -> str:
     client = Anthropic(api_key=api_key)
 
     # Choose Claude models 
-    model_name = "claude-3-5-sonnet-2024-10-09" if advanced else "claude-3-haiku-2024-10-09"
+    model_name = "claude-3-5-sonnet-20240620" if advanced else "claude-3-haiku-20240307"
 
-    response = client.chat.completions.create(
+    response = client.messages.create(
         model=model_name,
         messages=[
-            {"role": "system", "content": "You are a helpful assistant that summarizes web pages based on user instructions."},
-            {"role": "user", "content": prompt},
+            {"role": "system", "content": prompt},
         ],
     )
     # Claude responses are returned as content blocks
@@ -139,12 +138,6 @@ def validate_key(provider: str) -> None:
         raise ValueError(f"Unknown provider: {provider}")
 
 
-def run_llm(provider: str, prompt: str, advanced: bool) -> str:
-    if provider == "OpenAI":
-        return call_openai(prompt, advanced)
-    if provider == "Claude":
-        return call_claude(prompt, advanced)
-    raise ValueError(f"Unknown provider: {provider}")
 
 # User Interface
 st.set_page_config(page_title="HW2 – URL Summarizer", page_icon="🌐", layout="wide")
@@ -206,7 +199,7 @@ if url:
                 f"Document:\n{document_text}"
             )
 
-            if get_provider == "OpenAI":
+            if llm_provider == "OpenAI":
                 summary = call_openai(prompt, advanced=use_advanced_model)
             else:
                 summary = call_claude(prompt, advanced=use_advanced_model)
