@@ -169,13 +169,8 @@ summary_type = st.sidebar.radio(
     ],
 )
 
-use_advanced_model = st.sidebar.checkbox("Use advanced model", value=True)
 
-#provider = st.sidebar.selectbox(
-    #"Select LLM provider:",
-    #["OpenAI", "Claude"],
-    #index=0,
-#)   
+use_advanced_model = st.sidebar.checkbox("Use advanced model", value=False)
 
 llm_provider = st.sidebar.selectbox("LLM Provider", ["OpenAI", "Claude"])
 st.sidebar.caption("Make sure to set your API keys in Streamlit secrets.")
