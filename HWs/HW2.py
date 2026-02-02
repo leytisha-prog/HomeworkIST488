@@ -152,18 +152,14 @@ st.title("🌐 HW2 — URL Summarizer with Multiple LLMs")
 
 # URL input at TOP of screen (not sidebar)
 url = st.text_input("Enter a web page URL", placeholder="https://example.com/article")
-
+st.write(
+    "Enter a URL of a web page below and generate a summary using your choice of LLM provider and model."
+)
 # Output language dropdown (at least 3 options)
 output_language = st.selectbox(
     "Output language",
     ["English", "French", "Spanish", "German", "Chinese", "Japanese", "Portuguese", "Italian",],
     index=0,
-)
-
-# Show title and description.
-st.title("Web Page Summarizer App")
-st.write(
-    "Enter a URL of a web page below and generate a summary using your choice of LLM provider and model."
 )
 
 st.sidebar.header(":blue[Summary Options]")
