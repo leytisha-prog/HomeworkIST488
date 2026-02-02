@@ -111,15 +111,21 @@ def call_claude(prompt: str, advanced: bool) -> str:
         return "Error: Anthropic API key is missing."
     
     client = Anthropic(api_key=api_key)
+    prompt = str(prompt)
 
-    # Choose Claude models 
-    model_name = "claude-3-5-sonnet-20240620" if advanced else "claude-3-haiku-20240307"
+    # Choose Claude models - new models
+    model_new = "claude-3-5-sonnet-20240620" if advanced else "claude-3-haiku-20240307"
+
+    # Choose Claude models - legacy models if new models fail 
+    model_legacy = "claude-2" if advanced else "claude-1"
+   
 
     response = client.messages.create(
-        model=model_name,
+        model=model_new,
+        max_tokens=1000,
         messages=[
-            {"role": "system", "content": prompt},
-        ],
+            {"role": "system", "content": [{"type": "text", "text": prompt}]}],
+    
     )
     # Claude responses are returned as content blocks
     return response.choices[0].text.strip()
