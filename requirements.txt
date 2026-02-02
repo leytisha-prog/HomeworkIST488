@@ -3,3 +3,4 @@ openai
 requests
 beautifulsoup4
 anthropic>==0.77.0
+PyPDF2
