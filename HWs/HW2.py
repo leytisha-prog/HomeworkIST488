@@ -151,7 +151,7 @@ st.write(
 # Output language dropdown (at least 3 options)
 output_language = st.selectbox(
     "Output language",
-    ["English", "French", "Spanish", "German", "Chinese", "Japanese", "Portuguese", "Italian",],
+    ["English", "French", "Spanish", "German", "Chinese", "Japanese", "Portuguese", "Italian","Burmese"],
     index=0,
 )
 st.write(
@@ -171,11 +171,11 @@ summary_type = st.sidebar.radio(
 
 use_advanced_model = st.sidebar.checkbox("Use advanced model", value=True)
 
-provider = st.sidebar.selectbox(
-    "Select LLM provider:",
-    ["OpenAI", "Claude"],
-    index=0,
-)   
+#provider = st.sidebar.selectbox(
+    #"Select LLM provider:",
+    #["OpenAI", "Claude"],
+    #index=0,
+#)   
 
 llm_provider = st.sidebar.selectbox("LLM Provider", ["OpenAI", "Claude"])
 st.sidebar.caption("Make sure to set your API keys in Streamlit secrets.")
