@@ -151,15 +151,18 @@ st.set_page_config(page_title="HW2 – URL Summarizer", page_icon="🌐", layout
 st.title("🌐 HW2 — URL Summarizer with Multiple LLMs")
 
 # URL input at TOP of screen (not sidebar)
-url = st.text_input("Enter a web page URL", placeholder="https://example.com/article")
+url = st.text_input("Enter a web page URL below", placeholder="https://example.com/article")
 st.write(
-    "Enter a URL of a web page below and generate a summary using your choice of LLM provider and model."
+    "Generate a summary of a web page using your choice of LLM provider and model."
 )
 # Output language dropdown (at least 3 options)
 output_language = st.selectbox(
     "Output language",
     ["English", "French", "Spanish", "German", "Chinese", "Japanese", "Portuguese", "Italian",],
     index=0,
+)
+st.write(
+    "Select an output language for the summary."
 )
 
 st.sidebar.header(":blue[Summary Options]")
