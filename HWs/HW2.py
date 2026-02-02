@@ -164,14 +164,15 @@ st.write(
 url = st.text_input("Enter a web page URL below", placeholder="https://example.com/article")
 
 # Output language dropdown (at least 3 options)
+st.write(
+    "Select an output language for your summary."
+)
 output_language = st.selectbox(
     "Output language",
     ["English", "French", "Spanish", "German", "Chinese", "Japanese", "Portuguese", "Italian","Burmese"],
     index=0,
 )
-st.write(
-    "Select an output language for the summary."
-)
+
 
 st.sidebar.header(":blue[Summary Options]")
 
