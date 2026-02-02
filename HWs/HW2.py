@@ -102,33 +102,59 @@ def call_openai(prompt: str, advanced: bool) -> str:
     return response.choices[0].message.content.strip()
 
 def call_claude(prompt: str, advanced: bool) -> str:
-    # Anthropic SDK (python package: anthropic)
+    import streamlit as st
     from anthropic import Anthropic
 
     api_key = st.secrets.get("ANTHROPIC_API_KEY", "")
     if not api_key:
-        st.error("Anthropic API key is not set in secrets.")
-        return "Error: Anthropic API key is missing."
-    
+        raise ValueError("Missing ANTHROPIC_API_KEY in secrets.toml")
+
     client = Anthropic(api_key=api_key)
     prompt = str(prompt)
 
-    # Choose Claude models - new models
+    # "New" Claude 3.x model names (messages API)
     model_new = "claude-3-5-sonnet-20240620" if advanced else "claude-3-haiku-20240307"
 
-    # Choose Claude models - legacy models if new models fail 
-    model_legacy = "claude-2" if advanced else "claude-1"
-   
+    # "Legacy" model names (completions API) — safer fallback if Cloud has an old SDK
+    model_legacy = "claude-2.1" if advanced else "claude-instant-1.2"
 
-    response = client.messages.create(
-        model=model_new,
-        max_tokens=1000,
-        messages=[
-            {"role": "system", "content": [{"type": "text", "text": prompt}]}],
-    
+    # Try messages API (string content)
+    try:
+        resp = client.messages.create(
+            model=model_new,
+            max_tokens=800,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        # Extract text blocks safely
+        return "".join(getattr(b, "text", "") for b in (resp.content or [])).strip()
+    except TypeError:
+        pass  # try the blocks format next
+    except Exception:
+        pass
+
+    # Try messages API (block content)
+    try:
+        resp = client.messages.create(
+            model=model_new,
+            max_tokens=800,
+            messages=[{"role": "user", "content": [{"type": "text", "text": prompt}]}],
+        )
+        return "".join(getattr(b, "text", "") for b in (resp.content or [])).strip()
+    except TypeError:
+        pass  # fallback to legacy completions
+    except Exception:
+        pass
+
+    # Fallback: legacy completions API (older anthropic SDKs)
+    from anthropic import HUMAN_PROMPT, AI_PROMPT
+
+    resp = client.completions.create(
+        model=model_legacy,
+        prompt=f"{HUMAN_PROMPT}{prompt}{AI_PROMPT}",
+        max_tokens_to_sample=800,
     )
-    # Claude responses are returned as content blocks
-    return response.choices[0].text.strip()
+    return (resp.completion or "").strip()
+
 
 def validate_key(provider: str) -> None:
     """
