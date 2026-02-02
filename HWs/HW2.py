@@ -163,6 +163,8 @@ st.write(
 )
 url = st.text_input("Enter a web page URL below", placeholder="https://example.com/article")
 
+st.write ("---")
+
 # Output language dropdown (at least 3 options)
 st.write(
     "Select an output language for your summary."
