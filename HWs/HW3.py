@@ -79,9 +79,12 @@ if prompt := st.chat_input("What would you like to ask Chatty G?"):
     pct = int((tokens_used / MAX_TOKENS_IN) * 100) if MAX_TOKENS_IN else 0
     pct = max(0, min(pct, 100))  # Ensure percentage is between 0 and 100
 
-    with st.sidebar:
+    with st.sidebar.header(":blue[Options]"):
         st.subheader("Token Usage")
         st.progress(pct, text=f"{tokens_used} / {MAX_TOKENS_IN} tokens (estimate)")
+
+llm_provider = st.sidebar.selectbox("LLM Provider", ["OpenAI", "Claude"])
+st.sidebar.caption("Make sure to set your API keys in Streamlit secrets.")
 
 
 # Display assistant response in chat message container (streaming)
