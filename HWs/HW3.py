@@ -79,11 +79,7 @@ if prompt := st.chat_input("What would you like to ask Chatty G?"):
     with st.sidebar:
         st.subheader("Token Usage")
         st.progress(pct, text=f"{tokens_used} / {MAX_TOKENS_IN} tokens (estimate)")
-
-        st.subheader("Model Selection")
-        st.selectbox(
-    
-        )
+        
 
 # Display assistant response in chat message container (streaming)
 with st.chat_message("assistant"):
