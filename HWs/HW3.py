@@ -21,6 +21,33 @@ def read_url_content(url):
         st.error(f"Error reading {url}: {e}")
         return None
 
+# SIDEBAR - User inputs
+with st.sidebar:
+    st.header("URL Input")
+    urls_input = st.text_area(
+        "Enter URLs (one or more, separated by newlines):",
+        placeholder="https://example.com/article1\nhttps://example.com/article2",
+        height=150
+    )
+    submit_urls = st.button("Submit URLs")
+
+# Process URLs when button is clicked with Chatty G response
+if submit_urls:
+    urls = [url.strip() for url in urls_input.splitlines() if url.strip()]
+    if not urls:
+        st.warning("Please enter at least one valid URL.")
+    else:
+        for url in urls:
+            content = read_url_content(url)
+            if content:
+                prompt = f"Summarize the following content from {url}:\n\n{content}"
+                response = call_openai(prompt, advanced=True)
+                response = call_claude(prompt, advanced=True)
+                st.subheader(f"Summary for {url}:")
+                st.write(response)  
+
+
+# Call Vendor LLMs 
 def call_openai(prompt: str, advanced: bool) -> str:
     # OpenAI SDK (python package: openai)
     from openai import OpenAI
@@ -92,10 +119,6 @@ def validate_key(provider: str) -> None:
     else:
         raise ValueError(f"Unknown provider: {provider}")
 
-
-url = st.text_input("Enter a web page URL below", placeholder="https://example.com/article")
-
-st.write ("---")
 
 
 # Set OpenAI API key from Streamlit secrets
