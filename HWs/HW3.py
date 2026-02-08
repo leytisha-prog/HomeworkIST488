@@ -44,7 +44,7 @@ def read_url_content(url: str):
         soup = BeautifulSoup(r.text, "html.parser")
         for tag in soup(["script", "style", "noscript"]):
             tag.decompose()
-        return soup.get_text(separator="\n")[:8000]  # cap size
+        return soup.get_text(separator="\n")[:4000]  # cap size
     except requests.RequestException as e:
         st.error(f"Error reading {url}: {e}")
         return None
