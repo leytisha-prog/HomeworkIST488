@@ -120,20 +120,15 @@ def stream_openai(model_messages):
 def stream_claude(model_messages):
     # Simple approach: flatten into one prompt (keeps code legible)
     prompt = "\n\n".join([f'{m["role"].upper()}: {m["content"]}' for m in model_messages])
-    try:
         
-        with claude_client.messages.stream(
-            model=st.session_state.claude_model,
-            max_tokens=800,
-            messages=[{"role": "user", "content": prompt}],
-        ) as s:
-            for text in s.text_stream:
-                yield text
+    with claude_client.messages.stream(
+        model=st.session_state.claude_model,
+        max_tokens=800,
+        messages=[{"role": "user", "content": prompt}],
+    ) as s:
+        for text in s.text_stream:
+            yield text
     
-    except Anthropic.APIStatusError as e:
-        st.error(f"Claude API error {e.status_code}: {e.message}")
-        return
-
 # SIDEBAR -----------------------------------
 
 with st.sidebar:
