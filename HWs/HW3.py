@@ -97,7 +97,7 @@ def validate_key(provider: str) -> None:
 
 
 # Set OpenAI API key from Streamlit secrets
-client = OpenAI(api_key=st.secrets["OPEN_AI_KEY"])
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 # Set a default model and max tokens for the chat completions
 if "openai_model" not in st.session_state:
