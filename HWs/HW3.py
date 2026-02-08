@@ -11,9 +11,10 @@ st.title ("Chatty G - Lab 3: Streamlit Chat Interface")
 # Below is the code to set up OpenAI client and default model - pull responses from secrets
 
 # URL Reader (provided by Prof.)
+
+with st.sidebar.header(":blue[Tools]"):
 def read_url_content(url):
     try:
-        response = requests.get(url)
         response = requests.get(url)
         response.raise_for_status() # raise an eception for HTTP errors
         soup = BeautifulSoup(response.text, 'html.parser')
