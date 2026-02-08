@@ -44,10 +44,27 @@ def read_url_content(url: str):
         soup = BeautifulSoup(r.text, "html.parser")
         for tag in soup(["script", "style", "noscript"]):
             tag.decompose()
-        return soup.get_text(separator="\n")[:4000]  # cap size
+        return soup.get_text(separator="\n")[:8000]  # cap size
     except requests.RequestException as e:
         st.error(f"Error reading {url}: {e}")
         return None
+
+def fetch_claude_models():
+    try:
+        r = requests.get(
+            "https://api.anthropic.com/v1/models",
+            headers={
+                "x-api-key": st.secrets["ANTHROPIC_API_KEY"],
+                "anthropic-version": "2023-06-01",
+            },
+            timeout=10,
+        )
+        r.raise_for_status()
+        data = r.json().get("data", [])
+        return [m["id"] for m in data]
+    except Exception as e:
+        st.sidebar.error(f"Could not fetch Claude models: {e}")
+        return []
 
 def load_urls(url1: str, url2: str):
     texts = []
@@ -155,6 +172,22 @@ with st.sidebar:
         st.session_state.messages = []
         st.session_state.summary = ""
         st.success("Cleared.")
+
+if "claude_models" not in st.session_state:
+    st.session_state.claude_models = []
+
+if st.session_state.provider == "Claude":
+    if st.button("Refresh Claude models"):
+        st.session_state.claude_models = fetch_claude_models()
+
+    if st.session_state.claude_models:
+        st.session_state.claude_model = st.selectbox(
+            "Claude model",
+            st.session_state.claude_models
+        )
+    else:
+        st.info("Click 'Refresh Claude models' to load available Claude models.")
+
 
 # Display CHAT HISTORY ---------------------------------
 for m in st.session_state.messages:
