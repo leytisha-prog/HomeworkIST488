@@ -29,18 +29,40 @@ def read_url_content(url):
         st.error(f"Error reading {url}: {e}")
         return None
 
-# Initialize session state 
-if 'url_list' not in st.session_state:
-    st.session_state.url_list =[""]
-if 'num_urls' not in st.session_state:
-    st.session_state.num_urls = 1
+# SIDEBAR URL Input
+with st.sidebar:
+    st.header("Sources")
 
-# Funcrions to manage the URLs list
-def add_url_input ():
-    st.session_state.url_list.append("")
-    st.session_state.num_urls += 1
+    url1 = st.text_input("URL 1", placeholder="https://example.com/article")
+    url2 = st.text_input("URL 2 (optional)", placeholder="https://example.com/another")
 
+    load_urls = st.button("Load URL(s)")
 
+# INITIALIZE storage for URL text
+if "url_context" not in st.session_state:
+    st.session_state.url_context = ""
+
+if load_urls:
+    texts = []
+
+    # Basic VALIDATION (avoid fetching empty strings)
+    if url1.strip():
+        t1 = read_url_content(url1.strip())
+        if t1:
+            texts.append(f"SOURCE 1 ({url1}):\N{t1}")
+
+    if url2.strip():
+        t2 = read_url_content(url2.strip())
+        if t2:
+            texts.append(f"SOURCE 2 ({url2}):\n{t2}")
+
+        if texts:
+            # COMBINE and STORE for later use in the chatbot prompt
+            st.session_state.url_context = "\n\n".join(texts)
+            st.sidebar.success("Loaded URL content!")
+        else:
+            st.session_state.url_context = ""
+            st.sidebar.warning("No valid URL contnt loaded.")
 
 # Below is the code for a simple chat interface using Streamlit's chat components
 # Initialize chat history
