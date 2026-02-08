@@ -29,6 +29,19 @@ def read_url_content(url):
         st.error(f"Error reading {url}: {e}")
         return None
 
+# Initialize session state 
+if 'url_list' not in st.session_state:
+    st.session_state.url_list =[""]
+if 'num_urls' not in st.session_state:
+    st.session_state.num_urls = 1
+
+# Funcrions to manage the URLs list
+def add_url_input ():
+    st.session_state.url_list.append("")
+    st.session_state.num_urls += 1
+
+
+
 # Below is the code for a simple chat interface using Streamlit's chat components
 # Initialize chat history
 if "messages" not in st.session_state:
