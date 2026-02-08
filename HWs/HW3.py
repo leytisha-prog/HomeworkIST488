@@ -1,11 +1,30 @@
 from openai import OpenAI
 import streamlit as st
 import tiktoken
+import requests
+from bs4 import BeautifulSoup
+import anthropic
 
 
 st.title ("Chatty G - Lab 3: Streamlit Chat Interface")
 
 # Below is the code to set up OpenAI client and default model - pull responses from secrets
+
+# URL Reader (provided by Prof.)
+def read_url_content(url):
+    try:
+        response = requests.get(url)
+        response = requests.get(url)
+        response.raise_for_status() # raise an eception for HTTP errors
+        soup = BeautifulSoup(response.text, 'html.parser')
+        return soup.get_text(separator='\n')
+    except requests.RequestException as e:
+        st.error(f"Error reading {url}: {e}")
+        return None
+
+
+
+
 
 # Set OpenAI API key from Streamlit secrets
 client = OpenAI(api_key=st.secrets["OPEN_AI_KEY"])
