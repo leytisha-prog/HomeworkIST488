@@ -66,6 +66,21 @@ if load_urls:
 
 # Below is the code for a simple chat interface using Streamlit's chat components
 # Initialize chat history
+
+messages_for_model = [
+    {"role": "system", "content": "You are Chatty G, a helpful assistant."}
+
+]
+
+if st.session_state.url_context:
+    messages_for_model.append({
+      "role": "system",
+      "content": f"Use these sources as context:\n\n{st.session_state.url_context}"
+    })
+
+messages_for_model.extend(st.session_state.messages) # Ongoing CHAT BUFFER
+
+
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {
