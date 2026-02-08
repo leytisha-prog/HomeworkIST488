@@ -1,6 +1,9 @@
 from openai import OpenAI
 import streamlit as st
 import tiktoken
+import requests
+from bs4 import BeautifulSoup
+
 
 
 st.title ("Chatty G - Lab 3: Streamlit Chat Interface")
@@ -15,6 +18,17 @@ if "openai_model" not in st.session_state:
     st.session_state["openai_model"] = "gpt-4-turbo"
 
 
+# URL Reader (provided by Prof.)
+def read_url_content(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status() # raise an eception for HTTP errors
+        soup = BeautifulSoup(response.text, 'html.parser')
+        return soup.get_text(separator='\n')
+    except requests.RequestException as e:
+        st.error(f"Error reading {url}: {e}")
+        return None
+
 # Below is the code for a simple chat interface using Streamlit's chat components
 # Initialize chat history
 if "messages" not in st.session_state:
@@ -23,8 +37,7 @@ if "messages" not in st.session_state:
             "role": "system", 
             "content": (
                 "You are Chatty G, a helpful and friendly assistant."
-                "Explain the URL shortening process in simple terms, suitable for a 10-year-old."
-                "Summarize the URL in simple terms, suitable for a 10-year-old." 
+                
             )
         }   
     ]
