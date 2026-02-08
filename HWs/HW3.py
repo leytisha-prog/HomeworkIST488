@@ -130,7 +130,7 @@ def stream_claude(model_messages):
             for text in s.text_stream:
                 yield text
     
-    except anthropic.APIStatusError as e:
+    except Anthropic.APIStatusError as e:
         st.error(f"Claude API error {e.status_code}: {e.message}")
         return
 
