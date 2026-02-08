@@ -9,12 +9,9 @@ import anthropic
 st.title("Chatty G")
 st.write("An app that summarizes the contents of web pages.")
 
-openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-claude_client = Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
-
 PERSONA = "You are Chatty G, a helpful and friendly assistant."
 
-# SESSION STATE
+# SESSION STATE ------------------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []      # user/assistant only (display + buffer)
 if "url_context" not in st.session_state: 
@@ -22,7 +19,62 @@ if "url_context" not in st.session_state:
 if "summary" not in st.session_state:
     st.session_state.summary = "" # compress memory
 
-# URL reading (prof's code altered)
+# Client - secret keys in streamlit
+openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+claude_client = Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
+
+
+# SESSION DEFAULTS with LLMs advanced models -------------------
+if "provider" not in st.session_state:
+    st.session_state.provider = "OpenAI"
+
+if "openai_model" not in st.session_state:
+    st.session_state.openai_model = "gpt-4o"  
+
+if "claude_model" not in st.session_state:
+    st.session_state.claude_model = "claude-3-5-sonnet-latest"  
+
+# SIDEBAR -----------------------------------
+
+with st.sidebar:
+    st.header("Sources")
+    # (your URL inputs here)
+
+    st.divider()
+    st.header("Model")
+
+    st.session_state.provider = st.radio(
+        "Choose LLM",
+        ["OpenAI", "Claude"]
+    )
+
+    if st.session_state.provider == "OpenAI":
+        st.session_state.openai_model = st.selectbox(
+            "OpenAI model",
+            ["gpt-4o", "gpt-4.1", "gpt-4o-mini"]
+        )
+    else:
+        st.session_state.claude_model = st.selectbox(
+            "Claude model",
+            ["claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"]
+        )
+# SIDEBAR - URLS ------------------------------------------
+with st.sidebar:
+    st.header("Sources")
+    url1 = st.text_input("URL 1")
+    url2 = st.text_input("URL 2 (optional)")
+
+    if st.button("Load URL(s)"):
+        load_urls(url1, url2)
+        st.success("URLs loaded!" if st.session_state.url_context else "No URL content loaded.")
+
+    if st.button("Clear chat"):
+        st.session_state.messages = []
+        st.session_state.summary = ""
+        st.success("Cleared.")
+
+
+# URL reading (PROF'S CODE ALTERED) ------------------------
 def read_url_content(url: str):
     try:
         r = requests.get(url, timeout=10)
@@ -48,7 +100,7 @@ def load_urls(url1: str, url2: str):
 
     st.session_state.url_context = "\n\n---\n\n".join(texts) if texts else ""
 
-# SUMMARY 
+# SUMMARY ---------------------------------------
 def maybe_summarize():
     """
     If there are more than 12 messages in the chat,
@@ -81,15 +133,41 @@ def maybe_summarize():
     st.session_state.summary = (st.session_state.summary + "\n" + new_summary).strip()
     st.session_state.messages = st.session_state.messages[-KEEP_LAST:]
 
-# Build messages for the model (persona + urls, summary + buffer)
-def build_messages():
-    msgs = [{"role": "system", "content": PERSONA}]
+# BUILD MESSAGES FOR MODELS (persona + urls, summary + buffer)
+messages_for_model = build_messages()  # however you assemble persona + urls + summary + buffer
 
-    if st.session_state.url_context:
-        msgs.append({"role": "system", "content": "Use these sources as context:\n\n" + st.session_state.url_context})
-    
-    if st.session_state.summary:
-        msgs.append({"role": "system", "content": "Conversation summary so far:\n" + st.session_state.summary})
+with st.chat_message("assistant"):
+    if st.session_state.provider == "OpenAI":
+        stream = openai_client.chat.completions.create(
+            model=st.session_state.openai_model,
+            messages=messages_for_model,
+            stream=True,
+        )
+        # wrap to yield text chunks
+        def openai_text(stream):
+            for event in stream:
+                delta = event.choices[0].delta
+                if delta and getattr(delta, "content", None):
+                    yield delta.content
 
-    msgs.extend(st.session_state.messages)  # buffer
-    return msgs
+        answer = st.write_stream(openai_text(stream))
+
+    else:
+        # Claude streaming
+        def claude_text():
+            # Convert OpenAI-style messages to a single prompt (simple approach)
+            # (Keeps your app readable; you can improve later)
+            prompt = "\n\n".join([f'{m["role"].upper()}: {m["content"]}' for m in messages_for_model])
+
+            with claude_client.messages.stream(
+                model=st.session_state.claude_model,
+                max_tokens=800,
+                messages=[{"role": "user", "content": prompt}],
+            ) as s:
+                for text in s.text_stream:
+                    yield text
+
+        answer = st.write_stream(claude_text())
+
+st.session_state.messages.append({"role": "assistant", "content": answer})
+
