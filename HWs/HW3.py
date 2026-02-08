@@ -11,8 +11,6 @@ st.title ("Chatty G - Lab 3: Streamlit Chat Interface")
 # Below is the code to set up OpenAI client and default model - pull responses from secrets
 
 # URL Reader (provided by Prof.)
-
-with st.sidebar.header(":blue[Tools]"):
 def read_url_content(url):
     try:
         response = requests.get(url)
@@ -95,6 +93,9 @@ def validate_key(provider: str) -> None:
         raise ValueError(f"Unknown provider: {provider}")
 
 
+url = st.text_input("Enter a web page URL below", placeholder="https://example.com/article")
+
+st.write ("---")
 
 
 # Set OpenAI API key from Streamlit secrets
