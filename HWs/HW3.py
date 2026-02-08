@@ -22,6 +22,76 @@ def read_url_content(url):
         st.error(f"Error reading {url}: {e}")
         return None
 
+def call_openai(prompt: str, advanced: bool) -> str:
+    # OpenAI SDK (python package: openai)
+    from openai import OpenAI
+
+    api_key = st.secrets.get("OPENAI_API_KEY", "")
+    if not api_key:
+        st.error("OpenAI API key is not set in secrets.")
+        return "Error: OpenAI API key is missing."
+
+    client = OpenAI(api_key=api_key)
+
+    # Choose OpenAI models 
+    model = "gpt-4o" if advanced else "gpt-4o-mini"
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant that summarizes web pages based on user instructions."},
+            {"role": "user", "content": prompt},
+        ]
+    )
+    return response.choices[0].message.content.strip()
+
+def call_claude(prompt: str, advanced: bool) -> str:
+    from anthropic import Anthropic, APIStatusError, APIConnectionError, RateLimitError
+
+    api_key = st.secrets.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        st.error("Anthropic API key is not set in secrets.")
+        return "Error: Anthropic API key is missing."
+
+    client = Anthropic(api_key=api_key)
+
+    # Use stable aliases (recommended for assignments + fewer “model not found” issues)
+    model = "claude-sonnet-4-5" if advanced else "claude-haiku-4-5"
+
+    try:
+        resp = client.messages.create(
+            model=model,
+            max_tokens=800,
+            messages=[{"role": "user", "content": str(prompt)}],
+        )
+
+        # Combine text blocks safely
+        return "".join(getattr(b, "text", "") for b in (resp.content or [])).strip()
+
+    except RateLimitError:
+        return "Error: Claude rate limit hit. Try again in a moment."
+    except APIConnectionError:
+        return "Error: Network issue reaching Claude. Try again."
+    except APIStatusError as e:
+        # Shows HTTP status without leaking keys
+        return f"Error: Claude API error (HTTP {e.status_code}). Check billing/credits, key permissions, and model access."
+    except Exception as e:
+        return f"Error: Claude failed unexpectedly: {e}"
+
+
+def validate_key(provider: str) -> None:
+    """
+    Simple "key validity" check: we make a tiny request to the selected provider.
+    If it fails, we raise an error.
+    """
+    test_prompt = "Say OK."
+
+    if provider == "OpenAI":
+        _ = call_openai(test_prompt, advanced=False)
+    elif provider == "Claude":
+        _ = call_claude(test_prompt, advanced=False)
+    else:
+        raise ValueError(f"Unknown provider: {provider}")
 
 
 
