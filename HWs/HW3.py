@@ -1,128 +1,14 @@
 from openai import OpenAI
 import streamlit as st
 import tiktoken
-import requests
-from bs4 import BeautifulSoup
-import anthropic
 
 
 st.title ("Chatty G - Lab 3: Streamlit Chat Interface")
 
 # Below is the code to set up OpenAI client and default model - pull responses from secrets
 
-# URL Reader (provided by Prof.)
-def read_url_content(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status() # raise an eception for HTTP errors
-        soup = BeautifulSoup(response.text, 'html.parser')
-        return soup.get_text(separator='\n')
-    except requests.RequestException as e:
-        st.error(f"Error reading {url}: {e}")
-        return None
-
-# SIDEBAR - User inputs
-with st.sidebar:
-    st.header("URL Input")
-    urls_input = st.text_area(
-        "Enter URLs (one or more, separated by newlines):",
-        placeholder="https://example.com/article1\nhttps://example.com/article2",
-        height=150
-    )
-    submit_urls = st.button("Submit URLs")
-
-# Process URLs when button is clicked with Chatty G response
-if submit_urls:
-    urls = [url.strip() for url in urls_input.splitlines() if url.strip()]
-    if not urls:
-        st.warning("Please enter at least one valid URL.")
-    else:
-        for url in urls:
-            content = read_url_content(url)
-            if content:
-                prompt = f"Summarize the following content from {url}:\n\n{content}"
-                response = call_openai(prompt, advanced=True)
-                response = call_claude(prompt, advanced=True)
-                st.subheader(f"Summary for {url}:")
-                st.write(response)  
-
-
-# Call Vendor LLMs 
-def call_openai(prompt: str, advanced: bool) -> str:
-    # OpenAI SDK (python package: openai)
-    from openai import OpenAI
-
-    api_key = st.secrets.get("OPENAI_API_KEY", "")
-    if not api_key:
-        st.error("OpenAI API key is not set in secrets.")
-        return "Error: OpenAI API key is missing."
-
-    client = OpenAI(api_key=api_key)
-
-    # Choose OpenAI models 
-    model = "gpt-4o" if advanced else "gpt-4o-mini"
-
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant that summarizes web pages based on user instructions."},
-            {"role": "user", "content": prompt},
-        ]
-    )
-    return response.choices[0].message.content.strip()
-
-def call_claude(prompt: str, advanced: bool) -> str:
-    from anthropic import Anthropic, APIStatusError, APIConnectionError, RateLimitError
-
-    api_key = st.secrets.get("ANTHROPIC_API_KEY", "")
-    if not api_key:
-        st.error("Anthropic API key is not set in secrets.")
-        return "Error: Anthropic API key is missing."
-
-    client = Anthropic(api_key=api_key)
-
-    # Use stable aliases (recommended for assignments + fewer “model not found” issues)
-    model = "claude-sonnet-4-5" if advanced else "claude-haiku-4-5"
-
-    try:
-        resp = client.messages.create(
-            model=model,
-            max_tokens=800,
-            messages=[{"role": "user", "content": str(prompt)}],
-        )
-
-        # Combine text blocks safely
-        return "".join(getattr(b, "text", "") for b in (resp.content or [])).strip()
-
-    except RateLimitError:
-        return "Error: Claude rate limit hit. Try again in a moment."
-    except APIConnectionError:
-        return "Error: Network issue reaching Claude. Try again."
-    except APIStatusError as e:
-        # Shows HTTP status without leaking keys
-        return f"Error: Claude API error (HTTP {e.status_code}). Check billing/credits, key permissions, and model access."
-    except Exception as e:
-        return f"Error: Claude failed unexpectedly: {e}"
-
-
-def validate_key(provider: str) -> None:
-    """
-    Simple "key validity" check: we make a tiny request to the selected provider.
-    If it fails, we raise an error.
-    """
-    test_prompt = "Say OK."
-
-    if provider == "OpenAI":
-        _ = call_openai(test_prompt, advanced=False)
-    elif provider == "Claude":
-        _ = call_claude(test_prompt, advanced=False)
-    else:
-        raise ValueError(f"Unknown provider: {provider}")
-
-
-
 # Set OpenAI API key from Streamlit secrets
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+client = OpenAI(api_key=st.secrets["OPEN_AI_KEY"])
 
 # Set a default model and max tokens for the chat completions
 if "openai_model" not in st.session_state:
@@ -137,11 +23,8 @@ if "messages" not in st.session_state:
             "role": "system", 
             "content": (
                 "You are Chatty G, a helpful and friendly assistant."
-                "Explain in simple terms, suitable for a 10-year-old."
-                "After answering a question, ask the user if they have another question."
-                "If user says yes, give them more information on the topic they asked about."
-                "If user says no to follow-up questions, end the conversaution politely and ask them to come back if they have more questions in the future."
-                "Do not make up answers if you do not know the answer to a question."
+                "Explain the URL shortening process in simple terms, suitable for a 10-year-old."
+                "Summarize the URL in simple terms, suitable for a 10-year-old." 
             )
         }   
     ]
@@ -193,13 +76,14 @@ if prompt := st.chat_input("What would you like to ask Chatty G?"):
     pct = int((tokens_used / MAX_TOKENS_IN) * 100) if MAX_TOKENS_IN else 0
     pct = max(0, min(pct, 100))  # Ensure percentage is between 0 and 100
 
-    with st.sidebar.header(":blue[Options]"):
+    with st.sidebar:
         st.subheader("Token Usage")
         st.progress(pct, text=f"{tokens_used} / {MAX_TOKENS_IN} tokens (estimate)")
 
-llm_provider = st.sidebar.selectbox("LLM Provider", ["OpenAI", "Claude"])
-st.sidebar.caption("Make sure to set your API keys in Streamlit secrets.")
-
+        st.subheader("Model Selection")
+        st.selectbox(
+    
+        )
 
 # Display assistant response in chat message container (streaming)
 with st.chat_message("assistant"):
@@ -214,3 +98,12 @@ with st.chat_message("assistant"):
      response = st.write_stream(stream)
 st.session_state.messages.append({"role": "assistant", "content": response})        
    
+
+
+
+    
+
+
+
+
+
