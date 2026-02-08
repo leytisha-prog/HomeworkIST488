@@ -29,7 +29,7 @@ if "openai_model" not in st.session_state:
     st.session_state.openai_model = "gpt-4o"
 
 if "claude_model" not in st.session_state:
-    st.session_state.claude_model = "claude-3-5-sonnet-latest"
+    st.session_state.claude_model = "claude-4-5-sonnet"
 
 # Client - secret keys in streamlit
 openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
