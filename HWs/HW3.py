@@ -29,7 +29,7 @@ if "openai_model" not in st.session_state:
     st.session_state.openai_model = "gpt-4o"
 
 if "claude_model" not in st.session_state:
-    st.session_state.claude_model = "claude-4-5-sonnet"
+    st.session_state.claude_model = "claude-opus-4.6"
 
 # Client - secret keys in streamlit
 openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -146,9 +146,9 @@ with st.sidebar:
     st.session_state.provider = st.radio("Choose LLM", ["OpenAI", "Claude"])
 
     if st.session_state.provider == "OpenAI":
-        st.session_state.openai_model = st.selectbox("OpenAI model", ["gpt-4o", "gpt-4.1", "gpt-4o-mini"])
+        st.session_state.openai_model = st.selectbox("OpenAI model", ["gpt-4.6"])
     else:
-        st.session_state.claude_model = st.selectbox("Claude model", ["claude-opus-4.6", "claude-4-6-haiku-latest"])
+        st.session_state.claude_model = st.selectbox("Claude model", ["claude-opus-4.6"])
 
     st.divider()
     if st.button("Clear chat"):
