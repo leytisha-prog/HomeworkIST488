@@ -148,7 +148,7 @@ with st.sidebar:
     if st.session_state.provider == "OpenAI":
         st.session_state.openai_model = st.selectbox("OpenAI model", ["gpt-4.0", "gpt-4.1", "gpt-4.6"])
     else:
-        st.session_state.claude_model = st.selectbox("Claude model", ["claude-sonnet-4-5", "claude-opus-4.6"])
+        st.session_state.claude_model = st.selectbox("Claude model", ["claude-sonnet-4-5", "claude-opus-4-6"])
 
     st.divider()
     if st.button("Clear chat"):
