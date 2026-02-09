@@ -49,23 +49,6 @@ def read_url_content(url: str):
         st.error(f"Error reading {url}: {e}")
         return None
 
-def fetch_claude_models():
-    try:
-        r = requests.get(
-            "https://api.anthropic.com/v1/models",
-            headers={
-                "x-api-key": st.secrets["ANTHROPIC_API_KEY"],
-                "anthropic-version": "2023-06-01",
-            },
-            timeout=10,
-        )
-        r.raise_for_status()
-        data = r.json().get("data", [])
-        return [m["id"] for m in data]
-    except Exception as e:
-        st.sidebar.error(f"Could not fetch Claude models: {e}")
-        return []
-
 def load_urls(url1: str, url2: str):
     texts = []
 
@@ -165,28 +148,13 @@ with st.sidebar:
     if st.session_state.provider == "OpenAI":
         st.session_state.openai_model = st.selectbox("OpenAI model", ["gpt-4o", "gpt-4.1", "gpt-4o-mini"])
     else:
-        st.session_state.claude_model = st.selectbox("Claude model", ["claude-sonnet-4.5", "claude-3-5-haiku-latest"])
+        st.session_state.claude_model = st.selectbox("Claude model", ["claude-opus-4.6", "claude-4-6-haiku-latest"])
 
     st.divider()
     if st.button("Clear chat"):
         st.session_state.messages = []
         st.session_state.summary = ""
         st.success("Cleared.")
-
-if "claude_models" not in st.session_state:
-    st.session_state.claude_models = []
-
-if st.session_state.provider == "Claude":
-    if st.button("Refresh Claude models"):
-        st.session_state.claude_models = fetch_claude_models()
-
-    if st.session_state.claude_models:
-        st.session_state.claude_model = st.selectbox(
-            "Claude model",
-            st.session_state.claude_models
-        )
-    else:
-        st.info("Click 'Refresh Claude models' to load available Claude models.")
 
 
 # Display CHAT HISTORY ---------------------------------
