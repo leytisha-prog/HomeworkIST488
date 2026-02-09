@@ -26,7 +26,7 @@ if "provider" not in st.session_state:
     st.session_state.provider = "OpenAI"
 
 if "openai_model" not in st.session_state:
-    st.session_state.openai_model = "gpt-4.6"
+    st.session_state.openai_model = "gpt-5.2"
 
 if "claude_model" not in st.session_state:
     st.session_state.claude_model = "claude-opus-4-6"
@@ -146,7 +146,7 @@ with st.sidebar:
     st.session_state.provider = st.radio("Choose LLM", ["OpenAI", "Claude"])
 
     if st.session_state.provider == "OpenAI":
-        st.session_state.openai_model = st.selectbox("OpenAI model", ["gpt-4.0", "gpt-4.1", "gpt-4.6"])
+        st.session_state.openai_model = st.selectbox("OpenAI model", ["gpt-5-mini", "gpt-5.2"])
     else:
         st.session_state.claude_model = st.selectbox("Claude model", ["claude-sonnet-4-5", "claude-opus-4-6"])
 
