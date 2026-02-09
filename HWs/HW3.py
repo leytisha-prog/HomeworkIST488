@@ -8,7 +8,7 @@ from anthropic import Anthropic
 # Name of APP and description
 
 st.title("Chatty G")
-st.write("An app that summarizes the contents of web pages.")
+st.write("An app that synthesizes the contents of webpages. Ask any question about the details of your webpage and Chatty G will provide an answer.")
 
 PERSONA = "You are Chatty G, a helpful and friendly assistant."
 
