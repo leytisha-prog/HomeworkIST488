@@ -6,6 +6,7 @@ sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 # 2) Imports
 import time
 import random
+from pathlib import Path
 import streamlit as st
 from openai import OpenAI
 import chromadb
@@ -17,7 +18,7 @@ from bs4 import BeautifulSoup
 # 3. Paths (PDFs are inside Labs/Lab-04-Data)
 # ----------------------------
 BASE_DIR = Path(__file__).resolve().parents[1]             # repo root
-HTML_FOLDER = BASE_DIR / "HWs" / "html-websites"             # 7 HTML websites live here
+HTML_FOLDER = BASE_DIR / "HWs" / "html-websites"             # Many HTML websites live here
 
 # On Streamlit Cloud, /tmp is the safest writable location
 CHROMA_DIR = Path("/tmp") / "ChromaDB_for_HW4"
