@@ -9,20 +9,20 @@ import random
 import streamlit as st
 from openai import OpenAI
 import chromadb
-from pathlib import Path
-from PyPDF2 import PdfReader
 
+# For HTML to text
+from bs4 import BeautifulSoup
 
 # ----------------------------
 # 3. Paths (PDFs are inside Labs/Lab-04-Data)
 # ----------------------------
 BASE_DIR = Path(__file__).resolve().parents[1]             # repo root
-PDF_FOLDER = BASE_DIR / "Labs" / "Lab-04-Data"             # 7 PDFs live here
+HTML_FOLDER = BASE_DIR / "HWs" / "html-websites"             # 7 HTML websites live here
 
 # On Streamlit Cloud, /tmp is the safest writable location
-CHROMA_DIR = Path("/tmp") / "ChromaDB_for_Lab"
+CHROMA_DIR = Path("/tmp") / "ChromaDB_for_HW4"
 
-COLLECTION_NAME = "Lab4Collection"
+COLLECTION_NAME = "HW4Collection"
 EMBED_MODEL = "text-embedding-3-small"
 CHAT_MODEL = "gpt-4.1-mini"  #  gpt-5-mini doesn't appear to work with the temperature0.3
 
@@ -30,11 +30,11 @@ CHAT_MODEL = "gpt-4.1-mini"  #  gpt-5-mini doesn't appear to work with the tempe
 # ----------------------------
 # 4. App UI
 # ----------------------------
-st.title("Lab 4: Course Information Chatbot (RAG)")
+st.title("HW 4: Student ORGs Chatbot (Chunked RAG & Memory)") 
 
 # Helpful sanity check while developing (I can remove later)
-st.caption(f"PDF folder: {PDF_FOLDER}")
-st.caption(f"PDFs found: {[p.name for p in PDF_FOLDER.glob('*.pdf')]}")
+st.caption(f"HTML folder: {HTML_FOLDER}")
+st.caption(f"HTML files found: {[p.name for p in HTML_FOLDER.glob('*.html')]}")
 
 # OpenAI client
 if "openai_client" not in st.session_state:
@@ -42,24 +42,65 @@ if "openai_client" not in st.session_state:
 
 
 # ----------------------------
-# 5. Helpers: PDF -> text, embedding with retry
+# 5. Helpers: HTML -> text 
 # ----------------------------
-def extract_text_from_pdf(pdf_path: str, max_pages: int = 6) -> str:
-    """Read PDF and return text (cap pages to keep embedding fast)."""
-    reader = PdfReader(pdf_path)
-    chunks = []
-    for page in reader.pages[:max_pages]:
-        txt = page.extract_text()
-        if txt:
-            chunks.append(txt)
-    return "\n".join(chunks).strip()
+def html_to_text(html_str: str) -> str: 
+    """Convert HTML -> plain text for embedding. We strip scripts/styles and collapse whitespace.""" 
+    
+    soup = BeautifulSoup(html_str, "html.parser")
+    for tag in soup(["script", "style", "noscript"]):
+        tag.decompose()
+    text = soup.get_text(separator="\n") # preserve some structure with newlines
 
+    # Collapse multiple newlines and whitespace
+    lines = [ln.strip() for ln in text.splitlines()] 
+    lines = [ln for ln in lines if ln] # remove empty lines
+    return "\n".join(lines)
+
+   
+def chunk_into_two(text: str) -> tuple[str, str]:
+    """REQUIRED: creat exactly TWO chunks per document. 
+    Chunking method:
+    - We split the text into two halves by character count,
+    then "snap" the split to the nearest newline to avoid cutting sentences midline.
+    Why this method:
+    - Simple, deterministic, and meets the assignment requirements ("two mini documents per file")
+    - Keeps chunks roughly equal size, which helps retrieval coverage."""
+    
+    text = text.strip()
+    if len(text) <10:
+        return text, "" # short docs go in chunk 1, leave chunk 2 empty
+    mid = len(text) // 2
+
+    # Snap to nearest newline
+    left_nl = text.rfind("\n", 0, mid)
+    right_nl = text.find("\n", mid)
+
+    if left_nl == 1 and right_nl == 1:
+        split_at = mid
+    elif left_nl == -1:
+        split_at = right_nl
+    elif right_nl == -1:
+        split_at = left_nl
+    else:
+        # Choose the split that results in more balanced chunk sizes
+        split_at = left_nl if (mid - left_nl) <= (right_nl - mid) else right_nl
+    
+    chunk1 = text[:split_at].strip()
+    chunk2 = text[split_at:].strip()
+    return chunk1, chunk2
 
 def embed_with_retry(text: str, max_retries: int = 5) -> list:
-    """Retry transient OpenAI 500 errors; cap text to keep requests stable."""
-    client = st.session_state.openai_client
-    text = (text or "")[:12000]
+    """
+    Embeddings can sometimes throw transient 500 errors.
+    Retry with exponential backoff + jitter. 
+    Also cap length for stability (embedding models have limits, and I have had issues with very long documents).
+    """
 
+    client = st.session_state.openai_client
+    text = (text or "") [:12000] # cap length to avoid issues with very long documents
+
+    
     for attempt in range(1, max_retries + 1):
         try:
             return client.embeddings.create(input=text, model=EMBED_MODEL).data[0].embedding
@@ -70,150 +111,164 @@ def embed_with_retry(text: str, max_retries: int = 5) -> list:
 
 
 # ----------------------------
-# PART A: REQUIRED builder function
+# Vector DB Builder (ONLY ONCE)
 # ----------------------------
-def build_lab4_vectordb():
+
+def build_hw4_vectordb():
     """
-    REQUIRED by assignment:
-    - Construct ChromaDB collection named 'Lab4Collection'
-    - Use OpenAI embeddings
-    - Read 7 PDFs into text
-    - Use filename as key
-    - Use metadata as needed
-    - Return the collection
+    Build the Chroma vector DB from HTML files.
+    IMPORTANT: Only build if not already populated (saves time + cost).
+    Stores two chunks per HTML file. 
     """
+    
     chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
     collection = chroma_client.get_or_create_collection(COLLECTION_NAME)
+
 
     # If already built, return immediately (saves cost)
     if collection.count() > 0:
         return collection
 
-    pdf_files = sorted(PDF_FOLDER.glob("*.pdf"))
+    html_files = sorted(HTML_FOLDER.glob("*.html"))
 
     progress = st.progress(0)
     status = st.empty()
     added = 0
 
-    for i, pdf_file in enumerate(pdf_files, start=1):
-        status.write(f"Indexing {i}/{len(pdf_files)}: {pdf_file.name}")
+    for i, html_file in enumerate(html_files, start=1):
+        status.write(f"Indexing {i}/{len(html_files)}: {html_file.name}")
 
-        text = extract_text_from_pdf(str(pdf_file))
-        if not text:
-            st.warning(f"Skipping {pdf_file.name} (no extractable text).")
-            progress.progress(i / max(1, len(pdf_files)))
-            continue
+        raw_html = html_file.read_text(encoding="utf-8", errors="ignore")
+        text = html_to_text(raw_html)
 
-        doc_id = pdf_file.stem.replace(" ", "_")  # key = filename (safe)
-        try:
-            emb = embed_with_retry(text)
-            collection.add(
-                documents=[text[:12000]],
-                ids=[doc_id],
-                embeddings=[emb],
-                metadatas=[{"source": pdf_file.name}],
-            )
-            added += 1
-        except Exception as e:
-            # Continue so I don't end up with 0 PDFs loaded
-            st.error(f"Failed to embed {pdf_file.name}: {e}")
-            progress.progress(i / max(1, len(pdf_files)))
-            continue
+        # Create exactly two chunks per document
+        c1, c2 = chunk_into_two(text)
 
-        progress.progress(i / max(1, len(pdf_files)))
+        # Add Chunk 1
+        if c1:
+            try:
+                emb1 = embed_with_retry(c1)
+                collection.add(
+                    documents=[c1[:12000]],  # cap length for stability
+                    ids=[f"{html_file.stem}_chunk1"],
+                    embeddings=[emb1],
+                    metadatas=[{"source": html_file.name, "chunk": 1}],
+                    
+                )
+                added += 1
+            except Exception as e:
+                st.error(f"Failed embedding {html_file.name} chunk1: {e}")
+
+        # Add Chunk 2
+        if c2:
+            try:
+                emb2 = embed_with_retry(c2)
+                collection.add(
+                    documents=[c2[:12000]], # cap length for stability
+                    ids=[f"{html_file.stem}_chunk2"],
+                    embeddings=[emb2],
+                    metadatas=[{"source": html_file.name, "chunk": 2}],
+
+                )
+                added += 1
+            except Exception as e:
+                st.error(f"Failed embedding {html_file.name} chunk2: {e}")  
+
+        progress.progress(i / max(1, len(html_files)))    
 
     status.write("Indexing complete.")
-    st.success(f"Loaded {added} PDFs into ChromaDB.")
+    st.success(f"Loaded {added} chunks from HTML files into ChromaDB.")
     return collection
 
 
 # ----------------------------
-# Store VectorDB in session_state ONLY ONCE (assignment requirement)
+# Build/reuse vector DB in session_state (assignment requirement)
 # ----------------------------
-if "Lab4_VectorDB" not in st.session_state:
-    # This is the only place the build function is called automatically
-    with st.spinner("Building Lab4 vector DB (first run only)..."):
-        st.session_state.Lab4_VectorDB = build_lab4_vectordb()
 
-collection = st.session_state.Lab4_VectorDB
-st.write("Docs in collection:", collection.count())
+if "HW4_VectorDB" not in st.session_state:
+    with st.spinner("Building HW4 vector DB (first run only)..."):
+        st.session_state.HW4_VectorDB = build_hw4_vectordb()
+
+collection = st.session_state.HW4_VectorDB
+st.write("Chunks in collection:", collection.count())
+
+# Note: The above code builds the vector DB and stores it in session_state.
 
 
-# ----------------------------
-# PART A Test (remove later per Chris' instructions)
-# ----------------------------
-#st.subheader("Part A: VectorDB Test (remove for final submission)")
-#test_query = st.text_input("Test search string", value="Generative AI")
-#if st.button("Run test search"):
-    #q_emb = embed_with_retry(test_query)
-    #results = collection.query(
-        #query_embeddings=[q_emb],
-        #n_results=3,
-        #include=["metadatas"]   # don't include ids to avoid Chroma version errors -- I have been having issues with this. 
-   #)
-    #metas = (results.get("metadatas") or [[]])[0]
-    #top_files = []
-    #for meta in metas:
-        #meta = meta or {}
-        #top_files.append(meta.get("source", "unknown"))
-
-    #st.write("Top 3 returned documents:")
-    #for i, f in enumerate(top_files, start=1):
-        #st.write(f"{i}. {f}")
-
+# -----------------------------
+# Maintenance: rebuild button (optional, but helpful)
+# -----------------------------
+st.sidebar.header("Maintenance")
+if st.sidebar.button("Delete & Rebuild Vector DB"):
+    chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+    try:
+        chroma_client.delete_collection(COLLECTION_NAME)
+    except Exception:
+        pass
+    st.session_state.pop("Lab5_VectorDB", None)
+    st.success("Deleted collection. Refresh page to rebuild.")
 
 # ----------------------------
-# PART B: Chatbot using RAG
+# Retrieval + Answering 
 # ----------------------------
-st.divider()
-st.subheader("Part B: Course Information Chatbot (RAG)")
-
-def retrieve_context(question: str, k: int = 7):
+def retrieve_context(question: str, k: int = 5) -> tuple[str, list[str]]:
     q_emb = embed_with_retry(question)
+
     results = collection.query(
         query_embeddings=[q_emb],
         n_results=k,
-        include=["documents", "metadatas"]
+        include=["documents", "metadatas"],
     )
-    docs = (results.get("documents") or [[]])[0]
-    metas = (results.get("metadatas") or [[]])[0]
+
+    docs = (results.get("documents") or [[]])[0] 
+    metas = (results.get("metadatas") or [[]])[0]   
 
     blocks = []
     sources = []
     for i, doc in enumerate(docs):
         meta = metas[i] if i < len(metas) and metas[i] else {}
         src = meta.get("source", f"doc_{i+1}")
-        sources.append(src)
-        blocks.append(f"[SOURCE: {src}]\n{doc}")
+        ch = meta.get("chunk", "?")
+        sources.append(f"{src} (chunk {ch})")
+        blocks.append(f"[SOURCE: {src} | chunk {ch}]\n{doc}")
 
     context = "\n\n---\n\n".join(blocks)[:12000]
-    return context, sources
+    return context, sources 
 
-
-def answer_with_rag(question: str, context: str, sources: list[str]) -> str:
+def answer_with_rag_and_memory(question: str, context: str, memory_messages: list[dict]) -> str:
+    """
+    Memory buffer requirement:
+    - Keep only last 5 interactions (turns).
+    We pass those last turns and retrieved context and current question to the LLM.
+    """
     client = st.session_state.openai_client
 
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "You are a course information chatbot. "
-                "You are given syllabus excerpts retrieved via RAG. "
-                "If the answer is supported by the excerpts, use them and clearly say you used course documents via RAG. "
-                "If the answer is not supported by the excerpts, answer using general knowledge and clearly say it is not from the course documents."
-            )
-        },
-        {
-            "role": "user",
-            "content": f"""
+    system = {
+        "role": "system",
+        "content": (
+            "You are a helpful chatbot that answers questions about student organizations."
+            "You are given retrieved organization webpage excerpts via RAG."
+            "Use the excerpts when relevant, and cite which page/chunk you used."
+            "If the answer is not in the excerpts, answer using general knowledge and say it is not from the provided webpages."
+        )       
+    }   
+
+    user_with_context = {
+        "role": "user",
+        "content": f"""
 QUESTION:
 {question}
 
-SYLLABUS EXCERPTS (RAG):
+RETRIEVED WEBPAGE EXCERPTS (RAG):
 {context}
-""".strip()
-        }
-    ]
+
+Instructions:
+- If the excerpts contain relevant information, use them and cite pages/chunks.
+- If not, answer generally and say you did not use the excerpts.
+""".strip() 
+    }   
+
+    messages = [system] + memory_messages + [user_with_context]
 
     resp = client.chat.completions.create(
         model=CHAT_MODEL,
@@ -222,41 +277,78 @@ SYLLABUS EXCERPTS (RAG):
     )
     return resp.choices[0].message.content
 
+# ----------------------------
+# Chat UI + Memory Buffer (last 5 interactions)
+# ----------------------------
 
-# Chat history
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+st.header("Ask a question about student organizations")
 
-for m in st.session_state.messages:
+if "hw4_memory" not in st.session_state:
+    st.session_state.hw4_memory = [] # full chat history for display
+
+# Display chat history
+for m in st.session_state.hw4_memory:
     with st.chat_message(m["role"]):
         st.write(m["content"])
 
-user_q = st.chat_input("Ask a question about the syllabi...")
+user_q = st.chat_input("Type your question here...")
 
 if user_q:
-    st.session_state.messages.append({"role": "user", "content": user_q})
+    # Append user message
+    st.session_state.hw4_memory.append({"role": "user", "content": user_q}) 
     with st.chat_message("user"):
         st.write(user_q)
 
-    with st.spinner("Retrieving syllabi + generating answer..."):
-        context, sources = retrieve_context(user_q, k=7)
-        answer = answer_with_rag(user_q, context, sources)
+    # Build memory buffer: last 5 interactions = last 10 messages (user+assistant),
+    # but only from the *end* of the conversation.
+    # (We keep the display history bigger, but only feed the last 5 turns to the LLM.)
+    last_10 = st.session_state.lab5_messages[-10:]
+    memory_for_llm = [{"role": m["role"], "content": m["content"]} for m in last_10]
 
-    st.session_state.messages.append({"role": "assistant", "content": answer})
+    with st.spinner("Retrieving relevant org pages + generating answer..."):
+        context, sources = retrieve_context(user_q, k=5)
+        answer = answer_with_rag_and_memory(user_q, context, memory_for_llm)
+
+    st.session_state.lab5_messages.append({"role": "assistant", "content": answer})
     with st.chat_message("assistant"):
         st.write(answer)
-        st.caption("Sources: " + ", ".join(sources))
+        if sources:
+            st.caption("Sources: " + ", ".join(sources))
 
 
 # ----------------------------
-# Optional maintenance  - helps with rebuilding vectorDB
+# Evaluation section (Requirement #5)
 # ----------------------------
-st.sidebar.header("Maintenance (optional)")
-if st.sidebar.button("Delete collection and rebuild"):
-    chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
-    try:
-        chroma_client.delete_collection(COLLECTION_NAME)
-    except Exception:
-        pass
-    st.session_state.pop("Lab4_VectorDB", None)
-    st.success("Deleted. Refresh page to rebuild.")
+st.divider()
+st.header("Evaluation (5 Questions)")
+
+st.markdown("""
+Below is a suggested evaluation set. Replace with your own if your HTML pages differ.
+""")
+
+eval_questions = [
+    "Which student organizations focus on technology or computing?",
+    "How can a student join a student organization and what are common steps?",
+    "Which organizations mention community service or volunteering opportunities?",
+    "Which student orgs host events, workshops, or meetings regularly?",
+    "If I’m a first-year student, which organizations seem most beginner-friendly and why?",
+]
+
+st.subheader("5 Evaluation Questions")
+for i, q in enumerate(eval_questions, start=1):
+    st.write(f"{i}. {q}")
+
+st.subheader("Why these questions?")
+st.write("""
+- They test both broad discovery (“which orgs…”) and specific details (“how to join”).
+- They check whether retrieval finds the right pages and whether chunking still preserves meaning.
+- They include an advising-style question (first-year friendly) to see how the bot handles partial evidence + reasoning.
+""")
+
+st.subheader("Performance notes (fill in after testing)")
+st.write("""
+After you run your 5 questions, write a short reflection here:
+- Which questions were answered well?
+- Which answers were missing details because the relevant info was in the other chunk?
+- Would you change k (retrieval count), chunking method (split by headings instead of halves), or model choice?
+""")
