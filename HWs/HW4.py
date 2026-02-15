@@ -303,14 +303,14 @@ if user_q:
     # Build memory buffer: last 5 interactions = last 10 messages (user+assistant),
     # but only from the *end* of the conversation.
     # (We keep the display history bigger, but only feed the last 5 turns to the LLM.)
-    last_10 = st.session_state.lab5_messages[-10:]
+    last_10 = st.session_state.hw4_memory[-10:]
     memory_for_llm = [{"role": m["role"], "content": m["content"]} for m in last_10]
 
     with st.spinner("Retrieving relevant org pages + generating answer..."):
         context, sources = retrieve_context(user_q, k=5)
         answer = answer_with_rag_and_memory(user_q, context, memory_for_llm)
 
-    st.session_state.lab5_messages.append({"role": "assistant", "content": answer})
+    st.session_state.hw4_memory.append({"role": "assistant", "content": answer})
     with st.chat_message("assistant"):
         st.write(answer)
         if sources:
