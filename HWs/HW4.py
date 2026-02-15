@@ -39,7 +39,7 @@ st.title("HW 4: Student ORGs Chatbot (Chunked RAG & Memory)")
 
 # OpenAI client
 if "openai_client" not in st.session_state:
-    st.session_state.openai_client = OpenAI(api_key=st.secrets["OPEN_AI_KEY"])
+    st.session_state.openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 
 # ----------------------------
