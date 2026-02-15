@@ -34,8 +34,8 @@ CHAT_MODEL = "gpt-4.1-mini"  #  gpt-5-mini doesn't appear to work with the tempe
 st.title("HW 4: Student ORGs Chatbot (Chunked RAG & Memory)") 
 
 # Helpful sanity check while developing (I can remove later)
-st.caption(f"HTML folder: {HTML_FOLDER}")
-st.caption(f"HTML files found: {[p.name for p in HTML_FOLDER.glob('*.html')]}")
+#st.caption(f"HTML folder: {HTML_FOLDER}")
+#st.caption(f"HTML files found: {[p.name for p in HTML_FOLDER.glob('*.html')]}")
 
 # OpenAI client
 if "openai_client" not in st.session_state:
