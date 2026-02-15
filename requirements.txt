@@ -5,3 +5,7 @@ beautifulsoup4
 anthropic>==0.77.0
 PyPDF2
 tiktoken
+chromadb
+pysqlite3
+protobuf==3.20
+
