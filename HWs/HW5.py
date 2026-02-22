@@ -16,7 +16,7 @@ st.title("HW5: Short-Term Memory Chatbot and Tool-Calling RAG")
 st.caption("Uses a tool function that retrieves from Chroma and calls the LLM to answer.")
 
 # ----------------------------
-# 3. Paths (PDFs are inside Labs/Lab-04-Data)
+# 3. Paths 
 # ----------------------------
 BASE_DIR = Path(__file__).resolve().parents[1]   # repo root
 CHROMA_DIR = Path("/tmp") / "ChromaDB_HW5"      
