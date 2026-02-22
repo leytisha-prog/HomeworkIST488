@@ -5,11 +5,15 @@ sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 
 # 2) Imports
 import json
+import time
+import random 
 from pathlib import Path
 import streamlit as st
 from openai import OpenAI
 import chromadb
 
+# For HTML to text
+from bs4 import BeautifulSoup
 
 #------- App UI 
 st.title("HW5: Short-Term Memory Chatbot and Tool-Calling RAG")
@@ -19,8 +23,8 @@ st.caption("Uses a tool function that retrieves from Chroma and calls the LLM to
 # 3. Paths 
 # ----------------------------
 BASE_DIR = Path(__file__).resolve().parents[1]   # repo root
-CHROMA_DIR = Path("/tmp") / "ChromaDB_HW5"      
-COLLECTION_NAME = "html-websites" 
+CHROMA_DIR = Path("/tmp") / "ChromaDB_for_HW4"      
+COLLECTION_NAME = "HWs" / "html-websites" 
 EMBED_MODEL = "text-embedding-3-small"
 CHAT_MODEL = "gpt-4.1-mini"
 
