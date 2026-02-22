@@ -15,15 +15,15 @@ import chromadb
 from bs4 import BeautifulSoup
 
 # ----------------------------
-# 3. Paths 
+# 3. Path 
 # ----------------------------
 BASE_DIR = Path(__file__).resolve().parents[1]             # repo root
 HTML_FOLDER = BASE_DIR / "HWs" / "html-websites"             # Many HTML websites live here
 
 # On Streamlit Cloud, /tmp is the safest writable location
-CHROMA_DIR = Path("/tmp") / "ChromaDB_for_HW5"
+CHROMA_DIR = Path("/tmp") / "ChromaDB_for_HW4"
 
-COLLECTION_NAME = "HW5Collection"
+COLLECTION_NAME = "HW4Collection"
 EMBED_MODEL = "text-embedding-3-small"
 CHAT_MODEL = "gpt-4.1-mini"  #  gpt-5-mini doesn't appear to work with the temperature0.3
 
