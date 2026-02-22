@@ -23,8 +23,9 @@ st.caption("Uses a tool function that retrieves from Chroma and calls the LLM to
 # 3. Paths 
 # ----------------------------
 BASE_DIR = Path(__file__).resolve().parents[1]   # repo root
+HTML_FOLDER = BASE_DIR / "HWs" / "html-websites" 
 CHROMA_DIR = Path("/tmp") / "ChromaDB_for_HW4"      
-COLLECTION_NAME = "HWs" / "html-websites" 
+COLLECTION_NAME = "HW5Collection"
 EMBED_MODEL = "text-embedding-3-small"
 CHAT_MODEL = "gpt-4.1-mini"
 
