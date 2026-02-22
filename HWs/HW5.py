@@ -31,7 +31,7 @@ if "openai_client" not in st.session_state:
     st.session_state.openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 # -----------------------------
-# Chroma collection (assumes already built in HW4/Lab5)
+# Chroma collection 
 # -----------------------------
 @st.cache_resource
 def get_collection():
