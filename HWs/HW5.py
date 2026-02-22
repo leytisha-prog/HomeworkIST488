@@ -65,7 +65,7 @@ def retrieve_context(query: str, k: int = 5):
     results = collection.query(
         query_embeddings=[q_emb],
         n_results=k,
-        include=["documents", "metadatas", "ids"],
+        include=["documents", "metadatas"],
     )
 
     docs = (results.get("documents") or [[]])[0]
