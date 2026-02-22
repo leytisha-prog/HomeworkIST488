@@ -282,8 +282,6 @@ Instructions:
 # Chat UI + Memory Buffer (last 5 interactions)
 # ----------------------------
 
-st.header("Ask a question about student organizations")
-
 if "hw4_memory" not in st.session_state:
     st.session_state.hw4_memory = [] # full chat history for display
 
