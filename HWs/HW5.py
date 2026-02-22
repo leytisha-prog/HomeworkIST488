@@ -438,7 +438,7 @@ for m in st.session_state.hw5_messages:
     with st.chat_message(m["role"]):
         st.write(m["content"])
 
-user_q = st.chat_input("Ask about student organizations...")
+# user_q = st.chat_input("Ask about student organizations...")
 
 if user_q:
     st.session_state.hw5_messages.append({"role": "user", "content": user_q})
