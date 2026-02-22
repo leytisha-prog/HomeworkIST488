@@ -40,7 +40,7 @@ if "openai_client" not in st.session_state:
 # -----------------------------
 @st.cache_resource
 def get_collection():
-    chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+    chroma_client = chromadb.PersistentClient(path="./ChromaDB_for_HW5")
     return chroma_client.get_or_create_collection(COLLECTION_NAME)
 
 collection = get_collection()
