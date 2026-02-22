@@ -315,4 +315,3 @@ if user_q:
         st.write(answer)
         if sources:
             st.caption("Sources: " + ", ".join(sources))
-
