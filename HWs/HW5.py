@@ -197,7 +197,7 @@ if st.sidebar.button("Delete & Rebuild Vector DB"):
     st.success("Deleted collection. Refresh to rebuild.")
 
 # ----------------------------
-# Retrieval helper (ONE version only)
+# Retrieval helper (ONE version only) - I mistakenly created two when copying the previous HW4 codes
 # ----------------------------
 def retrieve_context(query: str, k: int = 5) -> tuple[str, list[str]]:
     q_emb = embed_with_retry(query)
