@@ -27,6 +27,35 @@ COLLECTION_NAME = "HW4Collection"
 EMBED_MODEL = "text-embedding-3-small"
 CHAT_MODEL = "gpt-4.1-mini"  #  gpt-5-mini doesn't appear to work with the temperature0.3
 
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
+# Use st.cache_data for functions that return serializable data like embeddings (lists/floats)
+@st.cache_data
+def get_openai_embedding(text, model="text-embedding-3-small"):
+    # Replace newlines with spaces for better compatibility, as suggested in the OpenAI docs
+    text = text.replace("\n", " ") 
+    # Call the OpenAI API to get the embedding
+    embedding = client.embeddings.create(input=[text], model=model).data[0].embedding
+    return embedding
+
+# Example of predefined text to embed
+static_text = "This is a predefined sentence to generate an embedding for."
+
+if st.button("Generate Embedding for Static Text"):
+    with st.spinner("Generating embeddings..."):
+        # Call the function without requiring user input via a prompt
+        embedding = get_text_embeddings([static_text]) 
+        st.success("Embedding generated and cached!")
+        st.write("Generated Embedding (truncated):", embedding[0][:10], "...")
+        st.write("Shape of embedding:", embedding.shape)
+
+# You can also integrate it into a larger workflow, such as processing an uploaded file
+uploaded_file = st.file_uploader("Upload a text file to embed content")
+if uploaded_file is not None:
+    # Process the file and generate embeddings as part of a background process
+    # ... (code to read file, chunk text, and call get_text_embeddings)
+    pass
+
 
 # ----------------------------
 # 4. App UI
