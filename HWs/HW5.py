@@ -157,7 +157,7 @@ def embed_with_retry(text: str, max_retries: int = 5) -> list:
 # Vector DB Builder (ONLY ONCE)
 # ----------------------------
 
-def build_hw4_vectordb():
+def build_hw5_vectordb():
     """
     Build the Chroma vector DB from HTML files.
     IMPORTANT: Only build if not already populated (saves time + cost).
@@ -248,7 +248,7 @@ if st.sidebar.button("Delete & Rebuild Vector DB"):
         chroma_client.delete_collection(COLLECTION_NAME)
     except Exception:
         pass
-    st.session_state.pop("Lab5_VectorDB", None)
+    st.session_state.pop("HW5_VectorDB", None)
     st.success("Deleted collection. Refresh page to rebuild.")
 
 # ----------------------------
@@ -326,11 +326,11 @@ Instructions:
 
 st.header("Ask a question about student organizations")
 
-if "hw4_memory" not in st.session_state:
-    st.session_state.hw4_memory = [] # full chat history for display
+if "hw5_memory" not in st.session_state:
+    st.session_state.hw5_memory = [] # full chat history for display
 
 # Display chat history
-for m in st.session_state.hw4_memory:
+for m in st.session_state.hw5_memory:
     with st.chat_message(m["role"]):
         st.write(m["content"])
 
@@ -338,7 +338,7 @@ user_q = st.chat_input("Type your question here...")
 
 if user_q:
     # Append user message
-    st.session_state.hw4_memory.append({"role": "user", "content": user_q}) 
+    st.session_state.hw5_memory.append({"role": "user", "content": user_q}) 
     with st.chat_message("user"):
         st.write(user_q)
 
