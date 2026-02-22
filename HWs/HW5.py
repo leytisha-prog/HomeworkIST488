@@ -228,11 +228,11 @@ def build_hw4_vectordb():
 # Build/reuse vector DB in session_state (assignment requirement)
 # ----------------------------
 
-if "HW4_VectorDB" not in st.session_state:
-    with st.spinner("Building HW4 vector DB (first run only)..."):
-        st.session_state.HW4_VectorDB = build_hw4_vectordb()
+if "HW5_VectorDB" not in st.session_state:
+    with st.spinner("Building HW5 vector DB (first run only)..."):
+        st.session_state.HW5_VectorDB = build_hw5_vectordb()
 
-collection = st.session_state.HW4_VectorDB
+collection = st.session_state.HW5_VectorDB
 st.write("Chunks in collection:", collection.count())
 
 # Note: The above code builds the vector DB and stores it in session_state.
