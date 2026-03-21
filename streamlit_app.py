@@ -26,8 +26,9 @@ HW2_page = st.Page("HWs/HW2.py", title="HW2", icon="🧪")
 HW3_page = st.Page("HWs/HW3.py", title="HW3", icon="💬")
 HW4_page = st.Page("HWs/HW4.py", title="HW4", icon="📚")
 HW5_page = st.Page("HWs/HW5.py", title="HW5", icon="📝")
+HW7_page = st.Page("HWs/HW7.py", title="HW7", icon="📰")
 
-pg = st.navigation([HW1_page, HW2_page, HW3_page, HW4_page, HW5_page])
+pg = st.navigation([HW1_page, HW2_page, HW3_page, HW4_page, HW5_page, HW7_page])
 
 st.set_page_config(page_title="HW Manager", page_icon=':material/edit:')
 pg.run() 
