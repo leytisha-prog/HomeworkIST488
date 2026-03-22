@@ -51,6 +51,7 @@ openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 # -------------------------------
 # 4. UI
 # -------------------------------
+st.write("Collection count:", collection.count())
 st.title("HW7: LawFirst Client News Bot! 📊")
 st.caption("CSV-Based RAG with Ranking + Model Comparison")
 
