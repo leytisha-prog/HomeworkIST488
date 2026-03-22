@@ -1,4 +1,4 @@
-import os
+import pandas 
 import streamlit as st
 
 df = pd.read_csv("HWs/news.csv", sep=";")
