@@ -60,3 +60,4 @@ print("Collection count after upsert:", collection.count())
 print("Collections:", client.list_collections())
 print("DB successfully built!")
 
+print("Final count:", collection.count())
