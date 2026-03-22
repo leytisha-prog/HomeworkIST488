@@ -2,6 +2,8 @@ import sys
 __import__("pysqlite3")
 sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 
+# This DATABASE is for HW7.py --- must be built first and ran once with 
+# build_db.py ran in Bash terminal 
 
 import pandas as pd
 import os
@@ -44,5 +46,3 @@ print("DB successfully built!")
 
 print("Collections:", client.list_collections())
 
-# This DATABASE is for HW7.py --- must be built first and ran once with 
-# build_db.py ran in Bash terminal 
