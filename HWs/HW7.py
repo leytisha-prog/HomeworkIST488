@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 df = pd.read_csv(
-    "Hws/news.csv",
+    "HWs/news.csv",
     sep=";",
     engine="python",
     quotechar='"',
