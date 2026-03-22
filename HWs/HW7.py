@@ -21,6 +21,9 @@ import streamlit as st
 import chromadb
 from openai import OpenAI
 
+collections = client.list_collections()
+st.write("Collections:", collections)
+
 client = chromadb.PersistentClient(path="./chroma_db_data")
 collection = client.get_collection(name="news_collection")
 
