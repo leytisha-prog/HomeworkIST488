@@ -50,8 +50,6 @@ query = st.text_input("Ask about the news:")
 
 st.subheader("Articles Being Ranked")
 
-query = st.text_input("Ask about the news:")
-
 if query:
     # 1. Retrieve from Chroma
     results = collection.query(
