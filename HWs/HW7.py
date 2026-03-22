@@ -46,8 +46,6 @@ collection = client.get_collection(name="news_collection")
 
 openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-query = st.text_input("Ask about the news:")
-
 st.subheader("Articles Being Ranked")
 
 query = st.text_input("Ask about the news:", key="news_query")
