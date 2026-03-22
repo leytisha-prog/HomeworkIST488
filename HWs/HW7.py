@@ -1,12 +1,12 @@
 
 # SQLite fix for Chroma (MUST be first)
-import sys
-__import__("pysqlite3")
-sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+#import sys
+#__import__("pysqlite3")
+#sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 
 
-import pandas as pd 
-import streamlit as st
+#import pandas as pd 
+#import streamlit as st
 
 #df = pd.read_csv(
     #"HWs/news.csv",
@@ -19,110 +19,156 @@ import streamlit as st
 # the file build_db.py is built
 # ---------------------------------
 
+# -------------------------------
+# 1. SQLite fix (MUST be first)
+# -------------------------------
+import sys
+__import__("pysqlite3")
+sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+
+# -------------------------------
+# 2. Imports
+# -------------------------------
+import streamlit as st
 import chromadb
 from openai import OpenAI
 import os
 
-# ----------------------------
-# App UI
-# ----------------------------
-st.title("HW7: LawFirst Client Media News Bot! 📣 ")
-st.caption("CSV-Based RAG")
-
-model_choice = st.selectbox(
-    "Choose a model:",
-    ["gpt-4o-mini", "gpt-4o"]
-)
-
+# -------------------------------
+# 3. Setup paths + DB
+# -------------------------------
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 client = chromadb.PersistentClient(
     path=os.path.join(BASE_DIR, "chroma_db_data")
 )
 
-#client = chromadb.PersistentClient(path="./chroma_db_data")
 collection = client.get_collection(name="news_collection")
 
-
+# OpenAI client
 openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-st.subheader("Articles Being Ranked")
+# -------------------------------
+# 4. UI
+# -------------------------------
+st.title("HW7: LawFirst Client News Bot! 📊")
+st.caption("CSV-Based RAG with Ranking + Model Comparison")
+
+model_choice = st.selectbox(
+    "Choose a model for answering:",
+    ["gpt-4o-mini", "gpt-4o"]
+)
 
 query = st.text_input("Ask about the news:", key="news_query")
 
+# -------------------------------
+# 5. Main RAG Logic
+# -------------------------------
 if query:
 
-    # 1. Retrieve documents
+    # Retrieve relevant docs
     results = collection.query(
         query_texts=[query],
         n_results=10
     )
 
-    docs = results["documents"][0]
+    docs = results.get("documents", [[]])[0]
+    metas = results.get("metadatas", [[]])[0]
 
     if not docs:
-        st.warning("No articles found.")
+        st.warning("No relevant articles found.")
     else:
-        # 2. Build structured context
+        # -------------------------------
+        # 6. Structured context (IMPORTANT)
+        # -------------------------------
         structured_context = ""
 
-        for i, doc in enumerate(docs):
+        for i, (doc, meta) in enumerate(zip(docs, metas)):
             structured_context += f"""
             Article {i+1}:
-            {doc}
+            Company: {meta.get("company", "")}
+            Date: {meta.get("date", "")}
+            Content: {doc}
             --------------------
             """
 
-        # 3. Show articles
-        st.subheader("Articles Being Ranked")
+        # Show retrieved articles
+        st.subheader("📄 Articles Retrieved")
         st.write(docs)
 
-        # 4. Normal answer
+        # -------------------------------
+        # 7. Answer generation
+        # -------------------------------
+        answer_prompt = f"""
+        You are a financial news assistant.
+
+        Use ONLY the articles below to answer the question.
+
+        Articles:
+        {structured_context}
+
+        Question:
+        {query}
+        """
+
         response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{
-                "role": "user",
-                "content": f"""
-                Use the articles below to answer the question.
-
-                {structured_context}
-
-                Question: {query}
-                """
-            }]
+            model=model_choice,
+            messages=[{"role": "user", "content": answer_prompt}]
         )
 
         st.subheader("Answer")
         st.write(response.choices[0].message.content)
 
-        # 5. Ranking comparison
+        # -------------------------------
+        # 8. Ranking (if "interesting")
+        # -------------------------------
         if "interesting" in query.lower():
 
             ranking_prompt = f"""
-            Rank these articles from MOST to LEAST interesting.
+            You are a news analyst.
 
+            Rank the following articles from MOST interesting to LEAST interesting.
+
+            Criteria:
+            - impact (economic, societal, or technological)
+            - novelty (new or surprising developments)
+            - relevance (importance to current events)
+
+            Instructions:
+            - Refer to articles by number (Article 1, Article 2, etc.)
+            - Provide ranking with explanation
+
+            Articles:
             {structured_context}
             """
 
-            mini = openai_client.chat.completions.create(
+            # Model 1 (cheap)
+            mini_response = openai_client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[{"role": "user", "content": ranking_prompt}]
             )
 
-            full = openai_client.chat.completions.create(
+            # Model 2 (strong)
+            full_response = openai_client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "user", "content": ranking_prompt}]
             )
 
+            # Display comparison
             st.subheader("Ranking Comparison")
 
             col1, col2 = st.columns(2)
 
             with col1:
-                st.write("Mini Model")
-                st.write(mini.choices[0].message.content)
+                st.markdown("GPT-4o-mini")
+                st.write(mini_response.choices[0].message.content)
 
             with col2:
-                st.write("Full Model")
-                st.write(full.choices[0].message.content)
+                st.markdown("GPT-4o")
+                st.write(full_response.choices[0].message.content)
 
+        # -------------------------------
+        # 9. Show sources
+        # -------------------------------
+        st.subheader("📚 Sources")
+        st.write(metas)
