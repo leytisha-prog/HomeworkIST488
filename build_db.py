@@ -41,3 +41,5 @@ ids = [str(i) for i in range(len(df))]
 collection.upsert(documents=documents, metadatas=metadatas, ids=ids)
 
 print("DB successfully built!")
+
+print(os.path.abspath("chroma_db_data"))
