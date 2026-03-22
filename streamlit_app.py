@@ -29,7 +29,7 @@ HW4_page = st.Page("HWs/HW4.py", title="HW4", icon="📚")
 HW5_page = st.Page("HWs/HW5.py", title="HW5", icon="📝")
 
 
-pg = st.navigation([HW7_page, HW2_page, HW3_page, HW4_page, HW5_page, HW1_page])
+pg = st.navigation([HW7_page, HW1_page, HW2_page, HW3_page, HW4_page, HW5_page])
 
 st.set_page_config(page_title="HW Manager", page_icon=':material/edit:')
 pg.run() 
