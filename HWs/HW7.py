@@ -81,4 +81,4 @@ if "interesting" in query.lower():
 
     st.write(response.choices[0].message.content)
 
-print(os.path.abspath("chroma_db_data"))
+

@@ -17,7 +17,7 @@ openai_ef = embedding_functions.OpenAIEmbeddingFunction(
 
 
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+BASE_DIR = os.path.dirname(__file__)
 
 client = chromadb.PersistentClient(
     path=os.path.join(BASE_DIR, "chroma_db_data")
@@ -42,4 +42,4 @@ collection.upsert(documents=documents, metadatas=metadatas, ids=ids)
 
 print("DB successfully built!")
 
-print(os.path.abspath("chroma_db_data"))
+print("Collections:", client.list_collections())
