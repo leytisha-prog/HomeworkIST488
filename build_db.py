@@ -61,4 +61,3 @@ print("Collections:", client.list_collections())
 print("DB successfully built!")
 
 print("Final count:", collection.count())
-print("BUILD DB PATH:", os.path.abspath(os.path.join(BASE_DIR, "chroma_db_data")))

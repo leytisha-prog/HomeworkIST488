@@ -175,5 +175,4 @@ if query:
         st.subheader("📚 Sources")
         st.write(metas)
 
-        st.write("APP DB PATH:", os.path.abspath(os.path.join(BASE_DIR, "chroma_db_data")))
-        
+
