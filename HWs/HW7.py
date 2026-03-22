@@ -44,6 +44,8 @@ client = chromadb.PersistentClient(
 )
 
 collection = client.get_collection(name="news_collection")
+st.write("DB path:", os.path.join(BASE_DIR, "chroma_db_data"))
+st.write("Exists:", os.path.exists(os.path.join(BASE_DIR, "chroma_db_data")))
 
 
 # OpenAI client
