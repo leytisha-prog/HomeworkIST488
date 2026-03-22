@@ -15,7 +15,8 @@ df = pd.read_csv(
     engine="python",
     on_bad_lines="skip"
 )
-print("DF shape:", df.shape)
+df.columns = df.columns.str.strip()
+
 print("Columns:", df.columns)
 
 openai_ef = embedding_functions.OpenAIEmbeddingFunction(
@@ -58,4 +59,4 @@ print("Rows loaded:", len(df))
 print("Collection count after upsert:", collection.count())
 print("Collections:", client.list_collections())
 print("DB successfully built!")
-print("Columns:", df.columns)
+
