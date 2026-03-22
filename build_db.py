@@ -2,30 +2,28 @@ import sys
 __import__("pysqlite3")
 sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 
-# This DATABASE is for HW7.py --- must be built first and ran once with 
-# build_db.py ran in Bash terminal 
-
-import pandas as pd
 import os
+import pandas as pd
 import chromadb
 from chromadb.utils import embedding_functions
 
-df = pd.read_csv("HWs/news.csv", sep=";", engine="python", on_bad_lines="skip")
+BASE_DIR = os.path.dirname(__file__)
 
-openai_ef = embedding_functions.OpenAIEmbeddingFunction(
-    api_key="OPENAI_API_KEY",
-    model_name="text-embedding-3-small"
+df = pd.read_csv(
+    os.path.join(BASE_DIR, "HWs", "news.csv"),
+    sep=";",
+    engine="python",
+    on_bad_lines="skip"
 )
 
-
-
-BASE_DIR = os.path.dirname(__file__)
+openai_ef = embedding_functions.OpenAIEmbeddingFunction(
+    api_key=os.environ["OPENAI_API_KEY"],
+    model_name="text-embedding-3-small"
+)
 
 client = chromadb.PersistentClient(
     path=os.path.join(BASE_DIR, "chroma_db_data")
 )
-
-# client = chromadb.PersistentClient(path="./chroma_db_data")
 
 collection = client.get_or_create_collection(
     name="news_collection",
@@ -37,12 +35,24 @@ documents = [
     for _, row in df.iterrows()
 ]
 
-metadatas = df.to_dict(orient="records")
+metadatas = [
+    {
+        "company": str(row["company_name"]),
+        "date": str(row["Date"]),
+        "url": str(row["URL"])
+    }
+    for _, row in df.iterrows()
+]
+
 ids = [str(i) for i in range(len(df))]
 
-collection.upsert(documents=documents, metadatas=metadatas, ids=ids)
+collection.upsert(
+    documents=documents,
+    metadatas=metadatas,
+    ids=ids
+)
 
-print("DB successfully built!")
-
+print("Rows loaded:", len(df))
+print("Collection count after upsert:", collection.count())
 print("Collections:", client.list_collections())
-
+print("DB successfully built!")
