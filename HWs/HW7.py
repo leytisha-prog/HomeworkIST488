@@ -80,11 +80,11 @@ if query:
     st.subheader("Answer")
     st.write(response.choices[0].message.content)
 
-    # 4. 🔥 Ranking comparison (NOW context exists)
+    # 4. Ranking comparison (NOW context exists)
     if "interesting" in query.lower():
 
         ranking_prompt = f"""
-        Rank the following news articles from MOST interesting to LEAST interesting.
+        Rank the news articles in the database from MOST interesting to LEAST interesting.
 
         Articles:
         {context}
