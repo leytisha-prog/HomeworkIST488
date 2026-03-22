@@ -2,6 +2,7 @@ import pandas as pd
 import chromadb
 from chromadb.utils import embedding_functions
 
+df = pd.read_csv("news.csv", sep=";")
 
 # 1. Embedding function 
 openai_ef = embedding_functions.OpenAIEmbeddingFunction(
