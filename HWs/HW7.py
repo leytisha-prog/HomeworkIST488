@@ -50,87 +50,81 @@ query = st.text_input("Ask about the news:")
 
 st.subheader("Articles Being Ranked")
 
+query = st.text_input("Ask about the news:", key="news_query")
+
 if query:
-    # 1. Retrieve from Chroma
+
+    # 1. Retrieve documents
     results = collection.query(
         query_texts=[query],
-        n_results=5
+        n_results=10
     )
 
     docs = results["documents"][0]
 
-    # 2. Build context (THIS is CRUCIAL)
-    structured_context = ""
+    if not docs:
+        st.warning("No articles found.")
+    else:
+        # 2. Build structured context
+        structured_context = ""
 
-for i, doc in enumerate(docs):
-    structured_context += f"""
-    Article {i+1}:
-    {doc}
-    --------------------
-    """
+        for i, doc in enumerate(docs):
+            structured_context += f"""
+            Article {i+1}:
+            {doc}
+            --------------------
+            """
 
-    # 3. Normal answer
-    response = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{
-            "role": "user",
-            "content": f"""
-            Use the articles below to answer the question.
+        # 3. Show articles
+        st.subheader("Articles Being Ranked")
+        st.write(docs)
+
+        # 4. Normal answer
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{
+                "role": "user",
+                "content": f"""
+                Use the articles below to answer the question.
+
+                {structured_context}
+
+                Question: {query}
+                """
+            }]
+        )
+
+        st.subheader("Answer")
+        st.write(response.choices[0].message.content)
+
+        # 5. Ranking comparison
+        if "interesting" in query.lower():
+
+            ranking_prompt = f"""
+            Rank these articles from MOST to LEAST interesting.
 
             {structured_context}
-
-            Question: {query}
             """
-        }]
-    )
 
-    st.subheader("Answer")
-    st.write(response.choices[0].message.content)
+            mini = openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": ranking_prompt}]
+            )
 
-    # 4. Ranking comparison (NOW context exists)
-    if "interesting" in query.lower():
+            full = openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": ranking_prompt}]
+            )
 
-        ranking_prompt = f"""
-        You are a news analyst.
+            st.subheader("Ranking Comparison")
 
-        Below are numbered news articles.
+            col1, col2 = st.columns(2)
 
-        Rank them from MOST interesting to LEAST interesting.
+            with col1:
+                st.write("Mini Model")
+                st.write(mini.choices[0].message.content)
 
-        Criteria:
-        - impact (economic, societal, or technological significance)
-        - novelty (new or surprising developments)
-        - relevance (importance to current events)
-
-        Instructions:
-        - Refer to articles by their number (e.g., Article 1, Article 2)
-        - Provide ranking as a numbered list
-        - Give a short explanation for each
-
-        Articles:
-        {structured_context}
-        """
-
-        mini_response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": ranking_prompt}]
-        )
-
-        full_response = openai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": ranking_prompt}]
-        )
-
-        st.subheader("Ranking Comparison")
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.write("Mini Model")
-            st.write(mini_response.choices[0].message.content)
-
-        with col2:
-            st.write("Full Model")
-            st.write(full_response.choices[0].message.content)
-
+            with col2:
+                st.write("Full Model")
+                st.write(full.choices[0].message.content)
 
