@@ -43,7 +43,7 @@ client = chromadb.PersistentClient(
     path=os.path.join(BASE_DIR, "chroma_db_data")
 )
 
-collection = client.get_collection(name="news_collection")
+collection = client.get_collection(name="news.csv")
 
 
 # OpenAI client
