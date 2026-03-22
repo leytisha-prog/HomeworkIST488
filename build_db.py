@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 import chromadb
 from chromadb.utils import embedding_functions
 
@@ -9,7 +10,15 @@ openai_ef = embedding_functions.OpenAIEmbeddingFunction(
     model_name="text-embedding-3-small"
 )
 
-client = chromadb.PersistentClient(path="./chroma_db_data")
+
+
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+client = chromadb.PersistentClient(
+    path=os.path.join(BASE_DIR, "chroma_db_data")
+)
+
+# client = chromadb.PersistentClient(path="./chroma_db_data")
 
 collection = client.get_or_create_collection(
     name="news_collection",
