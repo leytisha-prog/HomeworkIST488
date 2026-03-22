@@ -84,7 +84,21 @@ if query:
     if "interesting" in query.lower():
 
         ranking_prompt = f"""
-        Rank the news articles in the database from MOST interesting to LEAST interesting.
+        You are a news analyst.
+
+        Below are numbered news articles.
+
+        Rank them from MOST interesting to LEAST interesting.
+
+        Criteria:
+        - impact (economic, societal, or technological significance)
+        - novelty (new or surprising developments)
+        - relevance (importance to current events)
+
+        Instructions:
+        - Refer to articles by their number (e.g., Article 1, Article 2)
+        - Provide ranking as a numbered list
+        - Give a short explanation for each
 
         Articles:
         {context}
