@@ -47,8 +47,8 @@ metadatas = [
     for _, row in df.iterrows()
 ]
 
-ids = [str(i) for i in range(len(df))]
-
+#ids = [str(i) for i in range(len(df))] 
+ids = [str(i) for i in range(len(documents))]
 collection.upsert(
     documents=documents,
     metadatas=metadatas,
