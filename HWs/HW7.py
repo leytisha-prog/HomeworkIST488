@@ -26,7 +26,7 @@ import os
 # ----------------------------
 # App UI
 # ----------------------------
-st.title("HW7: Get Your News! 📣 ")
+st.title("HW7: LawFirst Client Media News Bot! 📣 ")
 st.caption("CSV-Based RAG")
 
 model_choice = st.selectbox(
