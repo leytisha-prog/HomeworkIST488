@@ -1,3 +1,9 @@
+
+# SQLite fix for Chroma (MUST be first)
+import sys
+__import__("pysqlite3")
+sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+
 import pandas as pd 
 import streamlit as st
 
@@ -7,7 +13,7 @@ import streamlit as st
     #engine="python",
     #quotechar='"',
     #on_bad_lines="skip"
-#)
+#) - Code above ALSO addresses csv parsing errors 
 # Above code is built and RAN ONCE - The code below is later added AFTER
 # the file build_db.py is built
 # ---------------------------------
