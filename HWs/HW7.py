@@ -45,6 +45,7 @@ client = chromadb.PersistentClient(
 
 collection = client.get_collection(name="news_collection")
 
+
 # OpenAI client
 openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 

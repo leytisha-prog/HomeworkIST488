@@ -15,6 +15,8 @@ df = pd.read_csv(
     engine="python",
     on_bad_lines="skip"
 )
+print("DF shape:", df.shape)
+print("Columns:", df.columns)
 
 openai_ef = embedding_functions.OpenAIEmbeddingFunction(
     api_key=os.environ["OPENAI_API_KEY"],
