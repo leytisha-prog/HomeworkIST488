@@ -9,5 +9,6 @@ df = pd.read_csv(
     on_bad_lines="skip"
 )
 
+print(df.head(1).to_dict())
 
 
