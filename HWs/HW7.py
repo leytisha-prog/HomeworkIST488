@@ -21,11 +21,11 @@ import streamlit as st
 import chromadb
 from openai import OpenAI
 
-collections = client.list_collections()
-st.write("Collections:", collections)
-
 client = chromadb.PersistentClient(path="./chroma_db_data")
 collection = client.get_collection(name="news_collection")
+
+collections = client.list_collections()
+st.write("Collections:", collections)
 
 openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
