@@ -59,8 +59,15 @@ if query:
 
     docs = results["documents"][0]
 
-    # 2. Build context (THIS is what you're missing)
-    context = "\n\n".join(docs)
+    # 2. Build context (THIS is CRUCIAL)
+    structured_context = ""
+
+for i, doc in enumerate(docs):
+    structured_context += f"""
+    Article {i+1}:
+    {doc}
+    --------------------
+    """
 
     # 3. Normal answer
     response = openai_client.chat.completions.create(
@@ -70,7 +77,7 @@ if query:
             "content": f"""
             Use the articles below to answer the question.
 
-            {context}
+            {structured_context}
 
             Question: {query}
             """
@@ -101,7 +108,7 @@ if query:
         - Give a short explanation for each
 
         Articles:
-        {context}
+        {structured_context}
         """
 
         mini_response = openai_client.chat.completions.create(
