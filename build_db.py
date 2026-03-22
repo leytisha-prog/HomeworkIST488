@@ -43,3 +43,6 @@ collection.upsert(documents=documents, metadatas=metadatas, ids=ids)
 print("DB successfully built!")
 
 print("Collections:", client.list_collections())
+
+# This DATABASE is for HW7.py --- must be built first and ran once with 
+# build_db.py ran in Bash terminal 
