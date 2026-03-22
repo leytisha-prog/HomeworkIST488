@@ -11,7 +11,7 @@ BASE_DIR = os.path.dirname(__file__)
 
 df = pd.read_csv(
     os.path.join(BASE_DIR, "HWs", "news.csv"),
-    sep=";",
+    sep=",",   
     engine="python",
     on_bad_lines="skip"
 )
